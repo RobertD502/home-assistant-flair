@@ -44,7 +44,7 @@ Available attributes:
 | `rssi` | Displays puck connection strength. |
 
 ### Vent
-![alt text](https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_system_setting.png?raw=true)
+![alt text](https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_system_setting_smaller.png?raw=true)
 In order to control vents, the System setting in the Flair app needs to be set to `Manual` (see image above). If you have it set to `Auto`, you will still be able to control your vents, however, eventually Flair will override your changes.
 
 Vents are exposed as `fan` entities and have a `state` of either `on` or `off`. If your vent is either `50` or `100` percent open, the state will be `on`. If your vent is `0` percent open, the state will be `off`. Turning the vent fan entity `on` manually will fully open the vent (100 percent). Turning the vent fan entity `off` manually will completely close the vent (0 percent). You are also able to manually open the vent halfway (50 percent) by either changing the speed to `50` via the UI or by using the service `fan.set_percentage` and setting `percentage` to `50`- the same goes for fully open with `100` or fully closed with `0`.
