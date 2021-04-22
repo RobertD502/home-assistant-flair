@@ -44,7 +44,9 @@ Available attributes:
 | `rssi` | Displays puck connection strength. |
 
 ### Vent
-![alt text](https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_system_setting_smaller.png?raw=true)
+<p align="center">
+  <img width="533" height="1000" src="https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_system_setting_smaller.png?raw=true">
+</p>
 
 In order to control vents, the System setting in the Flair app needs to be set to `Manual` (see image above). If you have it set to `Auto`, you will still be able to control your vents, however, eventually Flair will override your changes.
 
