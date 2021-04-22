@@ -8,7 +8,7 @@ Donations aren't required, but are always appreciated. If you enjoy this integra
 
 **Prior To Installation**
 
-You will need credentials consisting of client_id and client_secret. If you don't already have these, for API access, please [contact Support](https://support.flair.co/hc/en-us/requests/new) with the email address associated with your registered Flair account.
+You will need credentials consisting of client_id and client_secret. If you don't already have these, for API access, please [contact Flair Support](https://support.flair.co/hc/en-us/requests/new) with the email address associated with your registered Flair account.
 
 ## Installation
 
