@@ -1,0 +1,20 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Flair is already configured"
+        },
+        "error": {
+            "auth_error": "Flair authentication failed. Are your credentials correct?"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "client_id": "Flair client_id",
+                    "client_secret": "Flair client_secret"
+                },
+                "title": "Fill in your Flair API Credentials"
+            }
+        },
+        "title": "Flair"
+    }
+}
