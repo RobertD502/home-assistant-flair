@@ -96,9 +96,9 @@ Required Data Fields:
 
 UI Mode Example:
 
-![alt text](https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_set_schedule_ui.jpg)
+![alt text](https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_set_schedule_ui.jpg?raw=true)
 
 
 YAML Mode Example:
 
-![alt text](https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_set_schedule_yaml.jpg)
+![alt text](https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_set_schedule_yaml.jpg?raw=true)
