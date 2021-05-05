@@ -1,9 +1,10 @@
-"""Setting up Flair Pucks."""
+"""Setting up Flair Pucks and Structures"""
 
 import logging
-from homeassistant.helpers import entity_platform
+import voluptuous as vol
+from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import TEMP_CELSIUS
+from homeassistant.const import TEMP_CELSIUS, ATTR_ENTITY_ID
 
 
 """Attributes"""
@@ -14,6 +15,16 @@ ATTR_IS_GATEWAY = "is_gateway"
 ATTR_VOLTAGE = "voltage"
 ATTR_RSSI = "rssi"
 
+ATTR_AVAILABLE_SCHEDULES = "available_schedules"
+ATTR_SCHEDULE_NAME = "schedule_name"
+
+"""Services"""
+SERVICE_SET_SCHEDULE = "set_schedule"
+
+SET_SCHEDULE_SCHEMA = {
+    vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+    vol.Required(ATTR_SCHEDULE_NAME): cv.string,
+}
 
 
 from .const import (
@@ -34,12 +45,25 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up Flair Pucks."""
     flair = hass.data[DOMAIN]
 
+    platform = entity_platform.current_platform.get()
+
     pucks = []
+    structures = []
+
     for puck in flair.pucks():
         pucks.append(FlairPuck(puck))
 
-    async_add_entities(pucks)
+    for structure in flair.structures():
+        structures.append(FlairStructure(structure))
 
+    async_add_entities(pucks)
+    async_add_entities(structures)
+
+    platform.async_register_entity_service(
+        SERVICE_SET_SCHEDULE,
+        SET_SCHEDULE_SCHEMA,
+        "set_schedule",
+    )
 
 class FlairPuck(SensorEntity):
     """Representation of a Flair Puck."""
@@ -124,3 +148,84 @@ class FlairPuck(SensorEntity):
         """Update automation state."""
         _LOGGER.info("Refreshing device state")
         self._puck.refresh()
+
+class FlairStructure(SensorEntity):
+    """Representation of a Flair Structure."""
+
+    def __init__(self, structure):
+        self._structure = structure
+        self._available = True
+
+    @property
+    def unique_id(self):
+        """Return the ID of this Structure."""
+        return self._structure.structure_id
+
+    @property
+    def name(self):
+        """Return the name of the Structure if any."""
+        return 'flair_structure_' + self._structure.structure_name
+
+    @property
+    def icon(self):
+        """Set structure icon"""
+        return 'mdi:home'
+
+    @property
+    def state(self):
+        """Returns Current Structure Schedule"""
+        if self._structure.active_schedule == None:
+            return "No Active Schedule"
+        elif self._structure.schedules_list is not None:
+            SCHEDULE_LIST = self._structure.schedules_list
+            COMBINED_SCHEDULES = {}
+            for dictc in SCHEDULE_LIST:
+                COMBINED_SCHEDULES.update(dictc)
+            SCHEDULE_ID_TO_NAME = {v: k for (k, v) in COMBINED_SCHEDULES.items()}
+            return SCHEDULE_ID_TO_NAME.get(self._structure.active_schedule)
+        else:
+            return None
+
+    @property
+    def available_schedules(self):
+        try:
+            SCHEDULE_LIST = self._structure.schedules_list
+            COMBINED_SCHEDULES = {}
+            for dictc in SCHEDULE_LIST:
+                COMBINED_SCHEDULES.update(dictc)
+            """Returns a list of available schedules for that structure"""
+            if self._structure.schedules_list is None:
+                return None
+            else:
+                return list(COMBINED_SCHEDULES.keys())
+        except AttributeError:
+            print("This structure doesn't have a Schedule Attribute")
+
+    @property
+    def available(self):
+        """Return true if device is available."""
+        return self._available
+
+    @property
+    def device_state_attributes(self) -> dict:
+        """Return optional state attributes."""
+        return {
+            ATTR_AVAILABLE_SCHEDULES: self.available_schedules,
+        }
+
+    def set_schedule(self, schedule_name) -> None:
+        """Set Schedule By Name"""
+        SCHEDULE_LIST = self._structure.schedules_list
+        COMBINED_SCHEDULES = {}
+        for dictc in SCHEDULE_LIST:
+            COMBINED_SCHEDULES.update(dictc)
+        NAME_TO_SCHEDULE_ID = {k: v for (k, v) in COMBINED_SCHEDULES.items()}
+        while schedule_name not in list(COMBINED_SCHEDULES.keys()):
+            return _LOGGER.error("Invalid schedule name")
+        self._structure.set_schedule(NAME_TO_SCHEDULE_ID.get(schedule_name))
+        self.state
+
+    def update(self):
+        """Update automation state."""
+        _LOGGER.info("Refreshing puck state")
+        self._structure.refresh()
