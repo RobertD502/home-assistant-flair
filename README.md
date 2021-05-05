@@ -70,3 +70,35 @@ Available attributes:
 | Attribute | Description |
 | --- | --- |
 | `is_active` | If room is active or not. Can be either `true` or `false`. |
+
+### Structure
+
+Structures are exposed as `sensor` entities and have a `state` that displays the current active schedule, if any. 
+
+Available attributes:
+
+| Attribute | Description |
+| --- | --- |
+| `available_schedules` | List of names of schedules that are available for this structure. Schedules are created and named from within the Flair App. |
+
+## Services
+
+### flair.set_schedule
+
+Available through UI Mode or YAML Mode (examples of both below).
+
+Required Data Fields:
+
+| Field | Description |
+| --- | --- |
+| `entity_id` | entity_id of the structure for which you want to set a schedule (REQUIRED) |
+| `schedule_name` | name of the schedule you want to use. List of available named schedules can be found under the `available_schedules` attribute of `structure` sensors. |
+
+UI Mode Example:
+
+![alt text](https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_set_schedule_ui.jpg)
+
+
+YAML Mode Example:
+
+![alt text](https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_set_schedule_yaml.jpg)
