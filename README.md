@@ -57,6 +57,8 @@ Available attributes:
 | Attribute | Description |
 | --- | --- |
 | `percent_open` | The amount of percent the vent is open. This can be `100`, `50`, or `0` |
+| `duct_temp` | The current duct temperature reading of your vent. This value will be in Fahrenheit or Celsius depending on the units Home Assistant is set to. |
+| `duct_pressure_kPa` | The current duct pressure reading in kPa. |
 | `voltage` | Displays the current voltage of the vent. If using batteries to power your vent, this can be used to monitor battery health. |
 | `is_active` | If puck is active or not. Can be either `true` or `false`. Helpful in determining if a vent has gone offline as this will result in `false` being displayed for the `is_active` attribute |
 | `rssi` | Connection strength of vent to puck |
