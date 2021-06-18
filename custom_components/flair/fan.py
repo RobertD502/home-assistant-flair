@@ -17,6 +17,8 @@ ATTR_PERCENT_OPEN = "percent_open"
 ATTR_IS_ACTIVE = "is_active"
 ATTR_RSSI = "rssi"
 ATTR_VOLTAGE = "voltage"
+ATTR_DUCT_TEMP = "duct_temp"
+ATTR_DUCT_PRESSURE = "duct_pressure_kPa"
 
 ORDERED_NAMED_VENT_STATES = [VENT_HALF_OPEN, VENT_OPEN]
 
@@ -95,6 +97,21 @@ class FlairVent(FanEntity):
         return self._vent.voltage
 
     @property
+    def duct_temp(self):
+        if self._vent.duct_temp is None:
+            return None
+        elif not self.hass.config.units.is_metric:
+            return round(((self._vent.duct_temp * (9/5))+ 32), 2)
+        else:
+            return self._vent.duct_temp
+
+    @property
+    def duct_pressure(self):
+        if self._vent.duct_pressure is None:
+            return None
+        return self._vent.duct_pressure
+
+    @property
     def available(self):
         """Return true if device is available."""
         return self._available
@@ -104,6 +121,8 @@ class FlairVent(FanEntity):
         """Return optional state attributes."""
         return {
             ATTR_PERCENT_OPEN: self.percent_open,
+            ATTR_DUCT_TEMP: self.duct_temp,
+            ATTR_DUCT_PRESSURE: self.duct_pressure,
             ATTR_VOLTAGE: self.voltage,
             ATTR_IS_ACTIVE: self.is_active,
             ATTR_RSSI: self.rssi,
