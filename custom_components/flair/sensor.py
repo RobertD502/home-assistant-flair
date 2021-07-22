@@ -3,6 +3,7 @@
 import logging
 import voluptuous as vol
 from homeassistant.helpers import config_validation as cv, entity_platform
+from homeassistant.exceptions import PlatformNotReady
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import TEMP_CELSIUS, ATTR_ENTITY_ID
 
@@ -50,11 +51,19 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     pucks = []
     structures = []
 
-    for puck in flair.pucks():
-        pucks.append(FlairPuck(puck))
+    try:
+        for puck in flair.pucks():
+            pucks.append(FlairPuck(puck))
+    except Exception as e:
+        _LOGGER.error("Failed to get Puck(s) from Flair servers")
+        raise PlatformNotReady from e        
 
-    for structure in flair.structures():
-        structures.append(FlairStructure(structure))
+    try:
+        for structure in flair.structures():
+            structures.append(FlairStructure(structure))
+    except Exception as e:
+        _LOGGER.error("Failed to get Structure(s) from Whistle servers")
+        raise PlatformNotReady from e
 
     async_add_entities(pucks)
     async_add_entities(structures)
