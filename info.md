@@ -68,6 +68,7 @@ Available attributes:
 | `rssi` | Connection strength of vent to puck |
 
 ### Room
+Changes made to rooms will only persist if the System is set to `Auto` (the opposite of controlling vents).
 
 Rooms are exposed as `climate` entities and have a `state` that displays the type of mode your house is in (`heat`, `cool`, `heat_cool`, or `off`). Note, you cannot change this state as it is a limitation of the official flair python API. Changing the temperature for a room climate entity will change the set temperature of the corresponding room. This change will remain for `until next scheduled event`, `3h`, `8h`, `24h`, or `forever`- this depends on the setting in the Flair app under Home Settings > System Settings > Default Hold Duration.
 
