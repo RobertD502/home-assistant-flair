@@ -1,5 +1,6 @@
 import logging
 from homeassistant.util.percentage import ordered_list_item_to_percentage
+from homeassistant.exceptions import PlatformNotReady
 from homeassistant.components.fan import (
     FanEntity,
     SUPPORT_SET_SPEED,
@@ -41,9 +42,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     flair = hass.data[DOMAIN]
 
     vents = []
-
-    for vent in flair.vents():
-        vents.append(FlairVent(vent))
+    try:
+        for vent in flair.vents():
+            vents.append(FlairVent(vent))
+    except Exception as e:
+        _LOGGER.error("Failed to get vents from Flair servers")
+        raise PlatformNotReady from e
 
     async_add_entities(vents)
 
