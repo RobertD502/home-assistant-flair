@@ -1,5 +1,6 @@
 import logging
 from homeassistant.components.climate import ClimateEntity
+from homeassistant.exceptions import PlatformNotReady
 from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
     HVAC_MODE_OFF,
@@ -33,9 +34,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     flair = hass.data[DOMAIN]
 
     rooms = []
-
-    for room in flair.rooms():
-        rooms.append(FlairRoom(room))
+    try:
+        for room in flair.rooms():
+            rooms.append(FlairRoom(room))
+    except Exception as e:
+        _LOGGER.error("Failed to get Room(s) from Flair servers")
+        raise PlatformNotReady from e 
 
     async_add_entities(rooms)
 
