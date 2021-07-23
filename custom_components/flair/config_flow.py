@@ -66,7 +66,7 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_CLIENT_SECRET: self._client_secret,
         }
 
-        return self.async_create_entry(title='', data=config_data)
+        return self.async_create_entry(title='Flair', data=config_data)
 
     @callback
     def _show_form(self, errors=None):
