@@ -50,8 +50,9 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             client = await self.hass.async_add_executor_job(FlairHelper, self._client_id, self._client_secret)
             await self.hass.async_add_executor_job(client.discover_rooms)
 
-        except Exception:
+        except Exception as e:
             _LOGGER.error("Unable to connect to Flair: Failed to Log In")
+            _LOGGER.error(e)
             errors = {"base": "auth_error"}
 
         if errors:
