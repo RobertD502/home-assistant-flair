@@ -4,8 +4,8 @@ import logging
 import voluptuous as vol
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.exceptions import PlatformNotReady
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import TEMP_CELSIUS, ATTR_ENTITY_ID
+from homeassistant.components.sensor import SensorEntity, STATE_CLASS_MEASUREMENT
+from homeassistant.const import TEMP_CELSIUS, DEVICE_CLASS_TEMPERATURE, ATTR_ENTITY_ID
 
 
 """Attributes"""
@@ -62,7 +62,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         for structure in flair.structures():
             structures.append(FlairStructure(structure))
     except Exception as e:
-        _LOGGER.error("Failed to get Structure(s) from Whistle servers")
+        _LOGGER.error("Failed to get Structure(s) from Flair servers")
         raise PlatformNotReady from e
 
     async_add_entities(pucks)
@@ -92,15 +92,23 @@ class FlairPuck(SensorEntity):
         return 'flair_puck_' + self._puck.puck_name
 
     @property
-    def state(self):
+    def native_value(self):
         """Returns Puck Temperature"""
         if self._puck.current_temp is None:
             return None
         return self._puck.current_temp
 
     @property
-    def unit_of_measurement(self):
+    def native_unit_of_measurement(self):
         return TEMP_CELSIUS
+
+    @property
+    def device_class(self):
+        return DEVICE_CLASS_TEMPERATURE
+
+    @property
+    def state_class(self):
+        return STATE_CLASS_MEASUREMENT
 
     @property
     def icon(self):
@@ -181,7 +189,7 @@ class FlairStructure(SensorEntity):
         return 'mdi:home'
 
     @property
-    def state(self):
+    def native_value(self):
         """Returns Current Structure Schedule"""
         if self._structure.active_schedule == None:
             return "No Active Schedule"
