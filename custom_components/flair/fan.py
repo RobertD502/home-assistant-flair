@@ -169,5 +169,5 @@ class FlairVent(FanEntity):
 
     def update(self):
         """Update automation state."""
-        _LOGGER.info("Refreshing device state")
+        _LOGGER.debug("Refreshing device state")
         self._vent.refresh()

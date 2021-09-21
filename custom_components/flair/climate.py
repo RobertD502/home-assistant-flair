@@ -135,5 +135,5 @@ class FlairRoom(ClimateEntity):
 
     def update(self):
         """Update automation state."""
-        _LOGGER.info("Refreshing room state")
+        _LOGGER.debug("Refreshing room state")
         self._room.refresh()

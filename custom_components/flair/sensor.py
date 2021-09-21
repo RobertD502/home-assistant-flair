@@ -163,7 +163,7 @@ class FlairPuck(SensorEntity):
 
     def update(self):
         """Update automation state."""
-        _LOGGER.info("Refreshing device state")
+        _LOGGER.debug("Refreshing device state")
         self._puck.refresh()
 
 class FlairStructure(SensorEntity):
@@ -244,5 +244,5 @@ class FlairStructure(SensorEntity):
 
     def update(self):
         """Update automation state."""
-        _LOGGER.info("Refreshing puck state")
+        _LOGGER.debug("Refreshing puck state")
         self._structure.refresh()
