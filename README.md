@@ -43,6 +43,10 @@ Available attributes:
 | `voltage` | Displays the current voltage of the puck. If it is plugged in, this value will be constant (3.41 for me). If using batteries to power your puck, this can be used to monitor battery health. |
 | `rssi` | Displays puck connection strength. |
 
+### Puck Light Level
+Puck Light Level measurements are exposed as `sensor` entities. The unit of measurement is `lux` - this may change once I hear back from Flair.
+
+
 ### Vent
 <p align="center">
   <img width="533" height="1000" src="https://github.com/RobertD502/home-assistant-flair/blob/main/images/flair_system_setting_smaller.png?raw=true">
