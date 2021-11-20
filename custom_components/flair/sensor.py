@@ -5,7 +5,7 @@ import voluptuous as vol
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.components.sensor import SensorEntity, STATE_CLASS_MEASUREMENT
-from homeassistant.const import TEMP_CELSIUS, DEVICE_CLASS_TEMPERATURE, ATTR_ENTITY_ID
+from homeassistant.const import TEMP_CELSIUS, LIGHT_LUX, DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_ILLUMINANCE, ATTR_ENTITY_ID
 
 
 """Attributes"""
@@ -50,13 +50,21 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     pucks = []
     structures = []
+    puck_light = []
 
     try:
         for puck in flair.pucks():
             pucks.append(FlairPuck(puck))
     except Exception as e:
         _LOGGER.error("Failed to get Puck(s) from Flair servers")
-        raise PlatformNotReady from e        
+        raise PlatformNotReady from e
+
+    try:
+        for puck in flair.pucks():
+            puck_light.append(PuckLight(puck))
+    except Exception as e:
+        _LOGGER.error("Failed to get Puck(s) Light data from Flair servers")
+        raise PlatformNotReady from e 
 
     try:
         for structure in flair.structures():
@@ -66,6 +74,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         raise PlatformNotReady from e
 
     async_add_entities(pucks)
+    async_add_entities(puck_light)
     async_add_entities(structures)
 
     platform.async_register_entity_service(
@@ -160,6 +169,52 @@ class FlairPuck(SensorEntity):
             ATTR_VOLTAGE: self.voltage,
             ATTR_RSSI: self.rssi,
         }
+
+    def update(self):
+        """Update automation state."""
+        _LOGGER.info("Refreshing device state")
+        self._puck.refresh()
+
+class PuckLight(SensorEntity):
+    """Representation of a Flair Puck Light Sensor."""
+
+    def __init__(self, puck):
+        self._puck = puck
+        self._available = True
+
+    @property
+    def unique_id(self):
+        """Return the ID of this Puck."""
+        return self._puck.puck_id + '_light_sensor'
+
+    @property
+    def name(self):
+        """Return the name of the Puck if any."""
+        return 'flair_puck_' + self._puck.puck_name + '_light_level'
+
+    @property
+    def native_value(self):
+        """Returns Puck Light Level"""
+        if self._puck.light_level is None:
+            return None
+        return self._puck.light_level
+
+    @property
+    def native_unit_of_measurement(self):
+        return LIGHT_LUX
+
+    @property
+    def device_class(self):
+        return DEVICE_CLASS_ILLUMINANCE
+
+    @property
+    def state_class(self):
+        return STATE_CLASS_MEASUREMENT
+
+    @property
+    def available(self):
+        """Return true if device is available."""
+        return self._available
 
     def update(self):
         """Update automation state."""
