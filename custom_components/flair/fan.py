@@ -121,7 +121,7 @@ class FlairVent(FanEntity):
         return self._available
 
     @property
-    def device_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict:
         """Return optional state attributes."""
         return {
             ATTR_PERCENT_OPEN: self.percent_open,
