@@ -4,8 +4,8 @@ import logging
 import voluptuous as vol
 from homeassistant.helpers import config_validation as cv, entity_platform
 from homeassistant.exceptions import PlatformNotReady
-from homeassistant.components.sensor import SensorEntity, STATE_CLASS_MEASUREMENT
-from homeassistant.const import TEMP_CELSIUS, LIGHT_LUX, DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_ILLUMINANCE, ATTR_ENTITY_ID
+from homeassistant.components.sensor import SensorEntity, STATE_CLASS_MEASUREMENT, SensorDeviceClass
+from homeassistant.const import TEMP_CELSIUS, LIGHT_LUX, ATTR_ENTITY_ID
 
 
 """Attributes"""
@@ -112,8 +112,8 @@ class FlairPuck(SensorEntity):
         return TEMP_CELSIUS
 
     @property
-    def device_class(self):
-        return DEVICE_CLASS_TEMPERATURE
+    def device_class(self) -> SensorDeviceClass:
+        return SensorDeviceClass.TEMPERATURE
 
     @property
     def state_class(self):
@@ -204,8 +204,8 @@ class PuckLight(SensorEntity):
         return LIGHT_LUX
 
     @property
-    def device_class(self):
-        return DEVICE_CLASS_ILLUMINANCE
+    def device_class(self) -> SensorDeviceClass:
+        return SensorDeviceClass.ILLUMINANCE
 
     @property
     def state_class(self):
