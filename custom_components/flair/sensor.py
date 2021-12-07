@@ -160,7 +160,7 @@ class FlairPuck(SensorEntity):
         return self._available
 
     @property
-    def device_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict:
         """Return optional state attributes."""
         return {
             ATTR_HUMIDITY: self.humidity,
@@ -279,7 +279,7 @@ class FlairStructure(SensorEntity):
         return self._available
 
     @property
-    def device_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict:
         """Return optional state attributes."""
         return {
             ATTR_AVAILABLE_SCHEDULES: self.available_schedules,
