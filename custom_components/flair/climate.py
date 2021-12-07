@@ -118,7 +118,7 @@ class FlairRoom(ClimateEntity):
         return self._room.is_active
 
     @property
-    def device_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict:
         """Return optional state attributes."""
         return {
             ATTR_IS_ACTIVE: self.is_active,
