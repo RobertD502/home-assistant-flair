@@ -143,7 +143,7 @@ class PuckLight(SensorEntity):
     def native_value(self):
         """Returns Puck Light Level in lux"""
         """Convert value to Volts then multiply by 200 for 200 lux per Volt"""
-        return ((self._puck.light_level / 100) * 200)) 
+        return ((self._puck.light_level / 100) * 200) 
 
     @property
     def native_unit_of_measurement(self):
