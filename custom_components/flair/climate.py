@@ -212,6 +212,10 @@ class FlairRoom(ClimateEntity):
         else:
             _LOGGER.error("Missing valid arguments for set_temperature in %s", kwargs)
 
+    def set_hvac_mode(self, hvac_mode):
+        """Set new target hvac mode."""
+        _LOGGER.error("Room HVAC mode cannot be change for individual rooms. HVAC mode for all Rooms is set by Flair Structure.")
+
     def update(self):
         """Update automation state."""
         _LOGGER.info("Refreshing room state")
@@ -355,21 +359,30 @@ class FlairHvacUnit(ClimateEntity):
         """Flag supported features."""
         if (self._hvac_unit.swing_available and len(self._hvac_unit.hvac_fan_speeds) > 0):
             if self._hvac_unit.system_mode == "auto":
-                return SUPPORT_SWING_MODE | SUPPORT_FAN_MODE
+                if self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
+                    return SUPPORT_SWING_MODE | SUPPORT_FAN_MODE
+                else:
+                    return SUPPORT_TARGET_TEMPERATURE | SUPPORT_SWING_MODE | SUPPORT_FAN_MODE
             elif self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
                 return SUPPORT_SWING_MODE | SUPPORT_FAN_MODE
             else:
                 return SUPPORT_TARGET_TEMPERATURE | SUPPORT_SWING_MODE | SUPPORT_FAN_MODE
         elif self._hvac_unit.swing_available:
             if self._hvac_unit.system_mode == "auto":
-                return SUPPORT_SWING_MODE
+                if self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
+                    return SUPPORT_SWING_MODE
+                else:
+                    return SUPPORT_TARGET_TEMPERATURE | SUPPORT_SWING_MODE
             elif self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
                 return SUPPORT_SWING_MODE
             else:
                 return SUPPORT_TARGET_TEMPERATURE | SUPPORT_SWING_MODE
         elif len(self._hvac_unit.hvac_fan_speeds) > 0:
             if self._hvac_unit.system_mode == "auto":
-                return SUPPORT_FAN_MODE
+                if self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
+                    return SUPPORT_FAN_MODE
+                else:
+                    return SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE
             elif self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
                 return SUPPORT_FAN_MODE
             else:
@@ -385,9 +398,14 @@ class FlairHvacUnit(ClimateEntity):
     def set_temperature(self, **kwargs):
         """Set new target temperature."""
         temp = kwargs.get(ATTR_TEMPERATURE)
-
-        if temp is not None:
-            self._hvac_unit.set_hvac_temp(temp)
+        if self._hvac_unit.system_mode == "auto":
+            if not self.hass.config.units.is_metric:
+                self._hvac_unit.set_auto_hvac_temp(round((temp - 32) * (5/9)))
+            else:
+                self._hvac_unit.set_auto_hvac_temp(temp)
+        if self._hvac_unit.system_mode == "manual":
+            if temp is not None:
+                self._hvac_unit.set_hvac_temp(temp)
         else:
             _LOGGER.error("Missing valid arguments for set_temperature in %s", kwargs)
 
@@ -419,5 +437,5 @@ class FlairHvacUnit(ClimateEntity):
 
     def update(self):
         """Update automation state."""
-        _LOGGER.info("Refreshing flair hvac state")
+        _LOGGER.info("Refreshing Flair HVAC state")
         self._hvac_unit.refresh()
