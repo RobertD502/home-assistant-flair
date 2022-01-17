@@ -1,6 +1,8 @@
 """Config flow of our component"""
 import logging
 import voluptuous as vol
+from requests import HTTPError
+from flair_api import ApiError
 from flair.flair_helper import FlairHelper
 from homeassistant import config_entries
 from homeassistant.core import callback
@@ -48,12 +50,22 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         try:
             client = await self.hass.async_add_executor_job(FlairHelper, self._client_id, self._client_secret)
-            await self.hass.async_add_executor_job(client.discover_rooms)
+
+        except ApiError as e:
+            _LOGGER.error(f"Flair API error occured during setup: {e}")
+            errors = {"base": "flair_error"}
+
+        except HTTPError as e:
+            if e.response.status_code == 401:
+                _LOGGER.error(f"Flair unauthorized access: {e}")
+                errors = {"base": "unauthorized_error"}
+            else:
+                _LOGGER.error(f"Error occured during Flair setup: {e}")
+                errors = {"base": "flair_error"}
 
         except Exception as e:
-            _LOGGER.error("Unable to connect to Flair: Failed to Log In")
-            _LOGGER.error(e)
-            errors = {"base": "auth_error"}
+            _LOGGER.error(f"Error occured during Flair setup: {e}")
+            errors = {"base": "flair_error"}
 
         if errors:
             return self._show_form(errors=errors)

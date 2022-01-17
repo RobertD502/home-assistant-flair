@@ -11,7 +11,8 @@
       }
     },
     "error": {
-      "auth_error": "Flair authentication failed. Are your credentials correct?"
+      "flair_error": "An error occured while setting up Flair. Please check the Home Assistant Logs for details.",
+      "unauthorized_error": "Unauthorized Error. Are your Flair credentials correct?"
     },
     "abort": {
       "already_configured": "Flair is already configured"
