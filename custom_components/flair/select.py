@@ -97,11 +97,6 @@ class FlairStructureSchedule(SelectEntity):
             else:
                 self._available = True
             return SCHEDULES_LIST
-#            if len(SCHEDULES_LIST) > 0:
-#                self._available = True
-#                return SCHEDULES_LIST
-#            else:
-#                self._available = False
         except AttributeError:
             _LOGGER.warning(f"Failed to get schedules for Flair Structure: {self._structure.structure_name}")
             self._available = False
