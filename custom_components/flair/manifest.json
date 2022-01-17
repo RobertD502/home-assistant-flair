@@ -1,12 +1,12 @@
 {
   "domain": "flair",
   "name": "Flair",
-  "version": "0.0.4.6",
+  "version": "0.0.5.0",
   "iot_class": "cloud_polling",
   "documentation": "https://github.com/RobertD502/home-assistant-flair/blob/main/README.md",
   "issue_tracker": "https://github.com/RobertD502/home-assistant-flair/issues",
   "config_flow": true,
-  "requirements": ["git+https://github.com/RobertD502/hass-flair-helper@main#hass-flair-helper==0.0.9.5"],
+  "requirements": ["hass-flair-helper==0.1.0"],
   "dependencies": [],
   "codeowners": ["@RobertD502"]
 }
