@@ -10,6 +10,9 @@ Custom component for Home Assistant Core for controlling and monitoring Flair st
 
 You will need credentials consisting of **OAuth1** `client_id` and `client_secret`. If you don't already have these, for API access, please [contact Flair Support](https://support.flair.co/hc/en-us/requests/new) with the email address associated with your registered Flair account.
 
+## **IMPORTANT**
+If you handle external access to Home Assistant yourself (i.e., You don't use NabuCasa), you need to access Home Assistant via the **LOCAL** URL when setting up this integration. 
+
 # Table of Contents
 * [Installation](#installation)
    * [With HACS](#with-hacs)
