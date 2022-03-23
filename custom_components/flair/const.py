@@ -7,6 +7,7 @@ DOMAIN = "flair"
 PLATFORMS = [
     Platform.CLIMATE,
     Platform.FAN,
+    Platform.COVER,
     Platform.SENSOR,
     Platform.SELECT,
 ]
