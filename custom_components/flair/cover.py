@@ -1,31 +1,16 @@
 import logging
-from homeassistant.util.percentage import ordered_list_item_to_percentage
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.components.cover import (
     CoverEntity,
-    SUPPORT_SET_TILT_POSITION,
-    DEVICE_CLASS_DAMPER,
+    CoverDeviceClass,
     SUPPORT_OPEN_TILT,
     SUPPORT_CLOSE_TILT,
+    SUPPORT_SET_TILT_POSITION,
+    ATTR_TILT_POSITION,
 )
-from .const import (
-    DOMAIN,
-    VENT_CLOSED,
-    VENT_HALF_OPEN,
-    VENT_OPEN
-)
-
-ORDERED_NAMED_VENT_STATES = [VENT_HALF_OPEN, VENT_OPEN]
-
-VENT_STATE_TO_HASS = {
-    VENT_CLOSED: 0,
-    VENT_HALF_OPEN: ordered_list_item_to_percentage(ORDERED_NAMED_VENT_STATES, VENT_HALF_OPEN),
-    VENT_OPEN: ordered_list_item_to_percentage(ORDERED_NAMED_VENT_STATES, VENT_OPEN)
-}
-
-HASS_FAN_SPEED_TO_FLAIR = {v: k for (k, v) in VENT_STATE_TO_HASS.items()}
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -62,7 +47,7 @@ class FlairVent(CoverEntity):
         }
     @property
     def device_class(self):
-        return DEVICE_CLASS_DAMPER
+        return CoverDeviceClass.DAMPER
 
     @property
     def unique_id(self):
@@ -81,7 +66,7 @@ class FlairVent(CoverEntity):
 
     @property
     def is_closed(self):
-        """Return true if vent is open."""
+        """Return true if vent is closed."""
         return not self._vent.is_vent_open
 
     @property
@@ -89,17 +74,12 @@ class FlairVent(CoverEntity):
         """Return the current percent open."""
         if not self._vent.is_vent_open:
             return 0
-        return VENT_STATE_TO_HASS.get(self._vent.vent_percent)
-
-    @property
-    def speed_count(self) -> int:
-        """Get the list of available vent percentage open states."""
-        return len(ORDERED_NAMED_VENT_STATES)
+        return self._vent.vent_percent
 
     @property
     def supported_features(self) -> int:
         """Flag supported features."""
-        return SUPPORT_OPEN_TILT|SUPPORT_CLOSE_TILT|SUPPORT_SET_TILT_POSITION
+        return SUPPORT_OPEN_TILT | SUPPORT_CLOSE_TILT | SUPPORT_SET_TILT_POSITION
 
     def open_cover_tilt(self, **kwargs) -> None:
         """Open the vent."""
@@ -111,14 +91,12 @@ class FlairVent(CoverEntity):
 
     def set_cover_tilt_position(self, **kwargs):
         """Set vent percentage open."""
-        if kwargs['tilt_position'] == 0:
+        if kwargs[ATTR_TILT_POSITION] == 0:
             return self.close_cover_tilt()
-        if kwargs['tilt_position'] == 100:
+        elif kwargs[ATTR_TILT_POSITION] == 100:
             return self.open_cover_tilt()
-        if kwargs['tilt_position'] == VENT_HALF_OPEN:
-            return self._vent.set_vent_percentage(VENT_HALF_OPEN)
-        return self.set_cover_tilt_position(tilt_position=VENT_HALF_OPEN)
-
+        else:
+            return self._vent.set_vent_percentage(50)
         
     @property
     def available(self):
