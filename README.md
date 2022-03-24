@@ -90,7 +90,7 @@ Each Vent has the following entities:
 
 | Entity | Entity Type | Additional Comments |
 | --- | --- | --- |
-| `Vent` | `Fan` | Has a state of either `on` or `off`. If your vent is either `50` or `100` percent open, the state will be `on`. If your vent is `0` percent open, the state will be `off`. Turning the vent fan entity `on` manually will fully open the vent (100 percent). Turning the vent fan entity `off` manually will completely close the vent (0 percent). You are also able to manually open the vent halfway (50 percent) by either changing the speed to `50` via the UI or by using the service `fan.set_percentage` and setting `percentage` to `50`- the same goes for fully open with `100` or fully closed with `0`. |
+| `Vent` | `Cover` | Has a state of either `open` or `closed`. If your vent is either `50` or `100` percent open, the state will be `open`. If your vent is `0` percent open, the state will be `closed`. You can manually open the vent halfway (50 percent) by either changing the tilt position to `50` via the UI or by using the service `cover.set_cover_tilt_position` and setting `tilt position` to `50`. Note: Although you can move the slider to any value between 0-100, any tilt position other than `0` or `100` will be interpreted as `50` - this is a Flair vent limitation as it doesn't support any other position aside from 0, 50, or 100. |
 | `Duct Pressure` | `Sensor` | |
 | `Duct Temperature` | `Sensor` | |
 | `RSSI` | `Sensor` | |
