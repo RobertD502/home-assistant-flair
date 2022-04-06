@@ -5,9 +5,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.components.cover import (
     CoverEntity,
     CoverDeviceClass,
-    SUPPORT_OPEN_TILT,
-    SUPPORT_CLOSE_TILT,
-    SUPPORT_SET_TILT_POSITION,
+    CoverEntityFeature,
     ATTR_TILT_POSITION,
 )
 from .const import DOMAIN
@@ -79,7 +77,7 @@ class FlairVent(CoverEntity):
     @property
     def supported_features(self) -> int:
         """Flag supported features."""
-        return SUPPORT_OPEN_TILT | SUPPORT_CLOSE_TILT | SUPPORT_SET_TILT_POSITION
+        return CoverEntityFeature.OPEN_TILT | CoverEntityFeature.CLOSE_TILT | CoverEntityFeature.SET_TILT_POSITION
 
     def open_cover_tilt(self, **kwargs) -> None:
         """Open the vent."""
