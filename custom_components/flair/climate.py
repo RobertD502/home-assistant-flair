@@ -1,12 +1,9 @@
 import logging
-from homeassistant.components.climate import ClimateEntity
+from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.components.climate.const import (
-    SUPPORT_TARGET_TEMPERATURE,
-    SUPPORT_SWING_MODE,
-    SUPPORT_FAN_MODE,
     HVAC_MODE_OFF,
     HVAC_MODE_COOL,
     HVAC_MODE_HEAT,
@@ -196,7 +193,7 @@ class FlairRoom(ClimateEntity):
     @property
     def supported_features(self) -> int:
         """Flag supported features."""
-        return SUPPORT_TARGET_TEMPERATURE
+        return ClimateEntityFeature.TARGET_TEMPERATURE
 
     @property
     def available(self):
@@ -360,35 +357,35 @@ class FlairHvacUnit(ClimateEntity):
         if (self._hvac_unit.swing_available and len(self._hvac_unit.hvac_fan_speeds) > 0):
             if self._hvac_unit.system_mode == "auto":
                 if self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
-                    return SUPPORT_SWING_MODE | SUPPORT_FAN_MODE
+                    return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
                 else:
-                    return SUPPORT_TARGET_TEMPERATURE | SUPPORT_SWING_MODE | SUPPORT_FAN_MODE
+                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
             elif self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
-                return SUPPORT_SWING_MODE | SUPPORT_FAN_MODE
+                return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
             else:
-                return SUPPORT_TARGET_TEMPERATURE | SUPPORT_SWING_MODE | SUPPORT_FAN_MODE
+                return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
         elif self._hvac_unit.swing_available:
             if self._hvac_unit.system_mode == "auto":
                 if self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
-                    return SUPPORT_SWING_MODE
+                    return ClimateEntityFeature.SWING_MODE
                 else:
-                    return SUPPORT_TARGET_TEMPERATURE | SUPPORT_SWING_MODE
+                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE
             elif self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
-                return SUPPORT_SWING_MODE
+                return ClimateEntityFeature.SWING_MODE
             else:
-                return SUPPORT_TARGET_TEMPERATURE | SUPPORT_SWING_MODE
+                return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE
         elif len(self._hvac_unit.hvac_fan_speeds) > 0:
             if self._hvac_unit.system_mode == "auto":
                 if self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
-                    return SUPPORT_FAN_MODE
+                    return ClimateEntityFeature.FAN_MODE
                 else:
-                    return SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE
+                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
             elif self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
-                return SUPPORT_FAN_MODE
+                return ClimateEntityFeature.FAN_MODE
             else:
-                return SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE
+                return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
         else:
-            return SUPPORT_TARGET_TEMPERATURE
+            return ClimateEntityFeature.TARGET_TEMPERATURE
 
     @property
     def available(self):
