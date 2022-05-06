@@ -1,27 +1,15 @@
 import logging
-from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature
+from homeassistant.components.climate import ClimateEntity, ClimateEntityFeature, HVACAction, HVACMode
 from homeassistant.exceptions import PlatformNotReady
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.components.climate.const import (
-    HVAC_MODE_OFF,
-    HVAC_MODE_COOL,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_HEAT_COOL,
-    HVAC_MODE_DRY,
-    HVAC_MODE_FAN_ONLY,
     FAN_AUTO,
     FAN_HIGH,
     FAN_MEDIUM,
     FAN_LOW,
     SWING_ON,
     SWING_OFF,
-    CURRENT_HVAC_COOL,
-    CURRENT_HVAC_DRY,
-    CURRENT_HVAC_FAN,
-    CURRENT_HVAC_HEAT,
-    CURRENT_HVAC_OFF,
-
 )
 from homeassistant.const import ATTR_TEMPERATURE, TEMP_CELSIUS, TEMP_FAHRENHEIT
 from .const import DOMAIN
@@ -29,27 +17,27 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 THERMOSTAT_MODE_MAP = {
-    "float": HVAC_MODE_OFF,
-    "heat": HVAC_MODE_HEAT,
-    "cool": HVAC_MODE_COOL,
-    "auto": HVAC_MODE_HEAT_COOL,
+    "float": HVACMode.OFF,
+    "heat": HVACMode.HEAT,
+    "cool": HVACMode.COOL,
+    "auto": HVACMode.HEAT_COOL,
 }
 
 HVAC_CURRENT_MODE_MAP = {
-    "Off": HVAC_MODE_OFF,
-    "Dry": HVAC_MODE_DRY,
-    "Heat": HVAC_MODE_HEAT,
-    "Cool": HVAC_MODE_COOL,
-    "Fan": HVAC_MODE_FAN_ONLY,
-    "Auto": HVAC_MODE_HEAT_COOL,
+    "Off": HVACMode.OFF,
+    "Dry": HVACMode.DRY,
+    "Heat": HVACMode.HEAT,
+    "Cool": HVACMode.COOL,
+    "Fan": HVACMode.FAN_ONLY,
+    "Auto": HVACMode.HEAT_COOL,
 }
 
 HVAC_AVAILABLE_MODES_MAP = {
-    "DRY": HVAC_MODE_DRY,
-    "HEAT": HVAC_MODE_HEAT,
-    "COOL": HVAC_MODE_COOL,
-    "FAN": HVAC_MODE_FAN_ONLY,
-    "AUTO": HVAC_MODE_HEAT_COOL,
+    "DRY": HVACMode.DRY,
+    "HEAT": HVACMode.HEAT,
+    "COOL": HVACMode.COOL,
+    "FAN": HVACMode.FAN_ONLY,
+    "AUTO": HVACMode.HEAT_COOL,
 }
 
 HVAC_CURRENT_FAN_SPEED = {
@@ -170,7 +158,7 @@ class FlairRoom(ClimateEntity):
     @property
     def hvac_modes(self):
         """Return the Supported Modes"""
-        supported_modes = [HVAC_MODE_OFF, HVAC_MODE_COOL, HVAC_MODE_HEAT, HVAC_MODE_HEAT_COOL]
+        supported_modes = [HVACMode.OFF, HVACMode.COOL, HVACMode.HEAT, HVACMode.COOL]
         return supported_modes
 
     @property
@@ -263,7 +251,7 @@ class FlairHvacUnit(ClimateEntity):
     def hvac_mode(self):
         """Return the current hvac_mode"""
         if not self._hvac_unit.is_powered_on:
-            return HVAC_MODE_OFF
+            return HVACMode.OFF
         if self._hvac_unit.is_powered_on:
             mode = self._hvac_unit.hvac_mode
             if mode in HVAC_CURRENT_MODE_MAP:
@@ -273,7 +261,7 @@ class FlairHvacUnit(ClimateEntity):
     @property
     def hvac_modes(self):
         """Return the Supported Modes"""
-        supported_modes = [HVAC_MODE_OFF]
+        supported_modes = [HVACMode.OFF]
         modes = self._hvac_unit.hvac_modes
         for mode in modes:
             if mode in HVAC_AVAILABLE_MODES_MAP:
@@ -283,16 +271,16 @@ class FlairHvacUnit(ClimateEntity):
     @property
     def hvac_action(self):
         """Return HVAC current action"""
-        if (self._hvac_unit.is_powered_on and self.hvac_mode == HVAC_MODE_HEAT):
-            return CURRENT_HVAC_HEAT
-        if (self._hvac_unit.is_powered_on and self.hvac_mode == HVAC_MODE_COOL):
-            return CURRENT_HVAC_COOL
-        if (self._hvac_unit.is_powered_on and self.hvac_mode == HVAC_MODE_DRY):
-            return CURRENT_HVAC_DRY
-        if (self._hvac_unit.is_powered_on and self.hvac_mode == HVAC_MODE_FAN_ONLY):
-            return CURRENT_HVAC_FAN
+        if (self._hvac_unit.is_powered_on and self.hvac_mode == HVACMode.HEAT):
+            return HVACAction.HEATING
+        if (self._hvac_unit.is_powered_on and self.hvac_mode == HVACMode.COOL):
+            return HVACAction.COOLING
+        if (self._hvac_unit.is_powered_on and self.hvac_mode == HVACMode.DRY):
+            return HVACAction.DRYING
+        if (self._hvac_unit.is_powered_on and self.hvac_mode == HVACMode.FAN_ONLY):
+            return HVACAction.FAN
         if not self._hvac_unit.is_powered_on:
-            return CURRENT_HVAC_OFF
+            return HVACAction.OFF
 
     @property
     def fan_mode(self):
@@ -356,31 +344,31 @@ class FlairHvacUnit(ClimateEntity):
         """Flag supported features."""
         if (self._hvac_unit.swing_available and len(self._hvac_unit.hvac_fan_speeds) > 0):
             if self._hvac_unit.system_mode == "auto":
-                if self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
+                if self.hvac_mode == HVACMode.DRY or self.hvac_mode == HVACMode.FAN_ONLY:
                     return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
                 else:
                     return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
-            elif self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
+            elif self.hvac_mode == HVACMode.DRY or self.hvac_mode == HVACMode.FAN_ONLY:
                 return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
             else:
                 return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
         elif self._hvac_unit.swing_available:
             if self._hvac_unit.system_mode == "auto":
-                if self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
+                if self.hvac_mode == HVACMode.DRY or self.hvac_mode == HVACMode.FAN_ONLY:
                     return ClimateEntityFeature.SWING_MODE
                 else:
                     return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE
-            elif self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
+            elif self.hvac_mode == HVACMode.DRY or self.hvac_mode == HVACMode.FAN_ONLY:
                 return ClimateEntityFeature.SWING_MODE
             else:
                 return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE
         elif len(self._hvac_unit.hvac_fan_speeds) > 0:
             if self._hvac_unit.system_mode == "auto":
-                if self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
+                if self.hvac_mode == HVACMode.DRY or self.hvac_mode == HVACMode.FAN_ONLY:
                     return ClimateEntityFeature.FAN_MODE
                 else:
                     return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
-            elif self.hvac_mode == HVAC_MODE_DRY or self.hvac_mode == HVAC_MODE_FAN_ONLY:
+            elif self.hvac_mode == HVACMode.DRY or self.hvac_mode == HVACMode.FAN_ONLY:
                 return ClimateEntityFeature.FAN_MODE
             else:
                 return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
@@ -413,7 +401,7 @@ class FlairHvacUnit(ClimateEntity):
         elif not self._hvac_unit.is_powered_on:
             self._hvac_unit.set_hvac_power("On")
             self._hvac_unit.set_hvac_mode(HASS_HVAC_MODE_TO_FLAIR.get(hvac_mode))
-        elif hvac_mode == HVAC_MODE_OFF:
+        elif hvac_mode == HVACMode.OFF:
             self._hvac_unit.set_hvac_power("Off")
         else:
             self._hvac_unit.set_hvac_mode(HASS_HVAC_MODE_TO_FLAIR.get(hvac_mode))
