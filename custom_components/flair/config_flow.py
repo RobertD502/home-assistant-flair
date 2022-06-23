@@ -2,7 +2,7 @@
 import logging
 import voluptuous as vol
 from requests import HTTPError
-from flair_api import ApiError
+from hass_flair_api import ApiError
 from flair.flair_helper import FlairHelper
 from homeassistant import config_entries
 from homeassistant.core import callback
