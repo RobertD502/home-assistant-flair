@@ -1,47 +1,42 @@
-"""Support for Flair"""
-import asyncio
-import logging
-import voluptuous as vol
-from flair import FlairHelper
+""" Flair Component """
+from __future__ import annotations
 
-import homeassistant.helpers.config_validation as cv
+from flairaio.exceptions import FlairAuthError
+
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EVENT_HOMEASSISTANT_STOP
+from homeassistant.const import CONF_CLIENT_ID, CONF_CLIENT_SECRET
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.const import (
-    CONF_CLIENT_ID,
-    CONF_CLIENT_SECRET
-)
-from .const import DOMAIN, PLATFORMS
 
 
-_LOGGER = logging.getLogger(__name__)
-
-
-def setup(hass, config):
-    """Setup of the component"""
-    return True
-
+from .const import DOMAIN, LOGGER, PLATFORMS
+from .coordinator import FlairDataUpdateCoordinator
+from .util import NoStructuresError, NoUserError, async_validate_api
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up Flair integration from a config entry."""
-    client_id = entry.data[CONF_CLIENT_ID]
-    client_secret = entry.data[CONF_CLIENT_SECRET]
+    """Set up Flair from a config entry."""
 
-    _LOGGER.info("Initializing the Flair API")
-    flair = await hass.async_add_executor_job(FlairHelper, client_id, client_secret)
-    _LOGGER.info("Connected to API")
+    coordinator = FlairDataUpdateCoordinator(hass, entry)
+    await coordinator.async_config_entry_first_refresh()
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 
-    hass.data[DOMAIN] = flair
-
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Unload a Flair config entry."""
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
-        hass.data.pop(DOMAIN)
+    """Unload Flair config entry."""
+    if unload_ok := await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        del hass.data[DOMAIN][entry.entry_id]
+        if not hass.data[DOMAIN]:
+            del hass.data[DOMAIN]
     return unload_ok
+
+async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+    """Migrate old entry."""
+    
+    if entry.version == 1:
+        entry.async_start_reauth(hass)
+        return True
+        
+
+    return True
