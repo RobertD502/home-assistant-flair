@@ -1,19 +1,30 @@
 {
     "config": {
         "abort": {
-            "already_configured": "Flair is already configured"
+            "already_configured": "Flair account is already configured",
+            "reauth_successful": "Re-authentication was successful"
         },
         "error": {
-            "flair_error": "An error occured while setting up Flair. Please check the Home Assistant Logs for details.",
-            "unauthorized_error": "Unauthorized Error. Are your Flair credentials correct?"
+            "cannot_connect": "Failed to connect",
+            "incorrect_id_secret": "Invalid Client ID and/or Client Secret for selected account",
+            "invalid_auth": "Invalid authentication. Are your credentials correct?",
+            "no_structures": "No structures discovered",
+            "no_user": "No user found on account"
         },
         "step": {
             "user": {
                 "data": {
-                    "client_id": "Flair client_id",
-                    "client_secret": "Flair client_secret"
+                    "client_id": "OAuth 2.0 client_id",
+                    "client_secret": "OAuth 2.0 client_secret"
                 },
-                "title": "Fill in your Flair API Credentials"
+                "title": "Fill in your Flair OAuth 2.0 credentials"
+            },
+            "reauth_confirm": {
+                "data": {
+                    "client_id": "OAuth 2.0 client_id",
+                    "client_secret": "OAuth 2.0 client_secret"
+                },
+                "title": "Reauthenticate with your Flair OAuth 2.0 credentials"
             }
         },
         "title": "Flair"
