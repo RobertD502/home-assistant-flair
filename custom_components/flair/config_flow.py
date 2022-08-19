@@ -1,91 +1,115 @@
-"""Config flow of our component"""
-import logging
+""" Config Flow for Flair integration """
+
+from __future__ import annotations
+from collections.abc import Mapping
+from typing import Any
+
+from flairaio.exceptions import FlairAuthError
 import voluptuous as vol
-from requests import HTTPError
-from hass_flair_api import ApiError
-from flair.flair_helper import FlairHelper
+
 from homeassistant import config_entries
-from homeassistant.core import callback
-from homeassistant.const import (
-    CONF_CLIENT_ID,
-    CONF_CLIENT_SECRET
+from homeassistant.const import CONF_CLIENT_ID, CONF_CLIENT_SECRET
+from homeassistant.data_entry_flow import FlowResult
+import homeassistant.helpers.config_validation as cv
+
+from .const import DEFAULT_NAME, DOMAIN
+from .util import NoStructuresError, NoUserError, async_validate_api
+
+DATA_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_CLIENT_ID): cv.string,
+        vol.Required(CONF_CLIENT_SECRET): cv.string,
+    }
 )
-from .const import DOMAIN
-_LOGGER = logging.getLogger(__name__)
+
 
 class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle our config flow."""
+    """ Handle a config flow for Flair integration. """
 
-    VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
+    VERSION = 2
 
-    def __init__(self):
-        """Initialize Flair configuration flow"""
-        self.schema = vol.Schema({
-            vol.Required(CONF_CLIENT_ID): str,
-            vol.Required(CONF_CLIENT_SECRET): str
-        })
+    entry: config_entries.ConfigEntry | None
 
-        self._client_id = None
-        self._client_secret = None
+    async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
+        """ Handle re-authentication with Flair. """
 
-    async def async_step_user(self, user_input=None):
-        """Handle a flow start."""
+        self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        return await self.async_step_reauth_confirm()
 
-        if self._async_current_entries():
-            return self.async_abort(reason="already_configured")
+    async def async_step_reauth_confirm(
+            self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """ Confirm re-authentication with Flair. """
 
-        if not user_input:
-            return self._show_form()
+        errors: dict[str, str] = {}
 
-        self._client_id = user_input[CONF_CLIENT_ID]
-        self._client_secret = user_input[CONF_CLIENT_SECRET]
-
-        return await self._async_flair_login()
-
-
-    async def _async_flair_login(self):
-
-        errors = {}
-
-        try:
-            client = await self.hass.async_add_executor_job(FlairHelper, self._client_id, self._client_secret)
-
-        except ApiError as e:
-            _LOGGER.error(f"Flair API error occured during setup: {e}")
-            errors = {"base": "flair_error"}
-
-        except HTTPError as e:
-            if e.response.status_code == 401:
-                _LOGGER.error(f"Flair unauthorized access: {e}")
-                errors = {"base": "unauthorized_error"}
+        if user_input:
+            client_id = user_input[CONF_CLIENT_ID]
+            client_secret = user_input[CONF_CLIENT_SECRET]
+            try:
+                await async_validate_api(self.hass, client_id, client_secret)
+            except FlairAuthError:
+                errors["base"] = "invalid_auth"
+            except ConnectionError:
+                errors["base"] = "cannot_connect"
+            except NoStructuresError:
+                errors["base"] = "no_structures"
+            except NoUserError:
+                errors["base"] = "no_user"
             else:
-                _LOGGER.error(f"Error occured during Flair setup: {e}")
-                errors = {"base": "flair_error"}
+                assert self.entry is not None
 
-        except Exception as e:
-            _LOGGER.error(f"Error occured during Flair setup: {e}")
-            errors = {"base": "flair_error"}
+                self.hass.config_entries.async_update_entry(
+                    self.entry,
+                    data={
+                        **self.entry.data,
+                        CONF_CLIENT_ID: client_id,
+                        CONF_CLIENT_SECRET: client_secret,
 
-        if errors:
-            return self._show_form(errors=errors)
+                    },
+                )
+                await self.hass.config_entries.async_reload(self.entry.entry_id)
+                return self.async_abort(reason="reauth_successful")
+                errors["base"] = "incorrect_id_secret"
 
-        return await self._async_create_entry()
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=DATA_SCHEMA,
+            errors=errors,
+        )
 
-    async def _async_create_entry(self):
-        """Create the config entry."""
-        config_data = {
-            CONF_CLIENT_ID: self._client_id,
-            CONF_CLIENT_SECRET: self._client_secret,
-        }
+    async def async_step_user(
+            self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """ Handle the initial step. """
 
-        return self.async_create_entry(title='Flair', data=config_data)
+        errors: dict[str, str] = {}
 
-    @callback
-    def _show_form(self, errors=None):
-        """Show the form to the user."""
+        if user_input:
+
+            client_id = user_input[CONF_CLIENT_ID]
+            client_secret = user_input[CONF_CLIENT_SECRET]
+            try:
+                await async_validate_api(self.hass, client_id, client_secret)
+            except FlairAuthError:
+                errors["base"] = "invalid_auth"
+            except ConnectionError:
+                errors["base"] = "cannot_connect"
+            except NoStructuresError:
+                errors["base"] = "no_structures"
+            except NoUserError:
+                errors["base"] = "no_user"
+            else:
+                await self.async_set_unique_id(client_id)
+                self._abort_if_unique_id_configured()
+
+                return self.async_create_entry(
+                    title=DEFAULT_NAME,
+                    data={CONF_CLIENT_ID: client_id, CONF_CLIENT_SECRET: client_secret},
+                )
+
         return self.async_show_form(
             step_id="user",
-            data_schema=self.schema,
-            errors=errors if errors else {},
+            data_schema=DATA_SCHEMA,
+            errors=errors,
         )
