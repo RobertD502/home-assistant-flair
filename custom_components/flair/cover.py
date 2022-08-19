@@ -1,109 +1,218 @@
-import logging
-from homeassistant.exceptions import PlatformNotReady
+""" Cover platform for Flair integration. """
+from __future__ import annotations
+
+from typing import Any
+
+from flairaio.model import Room, Structure, Vent
+from homeassistant.components.cover import (
+    ATTR_TILT_POSITION,
+    CoverDeviceClass,
+    CoverEntity,
+    CoverEntityFeature,
+)
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.components.cover import (
-    CoverEntity,
-    CoverDeviceClass,
-    CoverEntityFeature,
-    ATTR_TILT_POSITION,
-)
-from .const import DOMAIN
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-_LOGGER = logging.getLogger(__name__)
+from .const import DOMAIN, LOGGER
+from .coordinator import FlairDataUpdateCoordinator
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities):
-    """Set up Flair Vents."""
-    flair = hass.data[DOMAIN]
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
+    """ Set Up Flair Cover Entities. """
 
-    vents = []
-    try:
-        for vent in flair.vents():
-            vents.append(FlairVent(vent))
-    except Exception as e:
-        _LOGGER.error("Failed to get vents from Flair servers")
-        raise PlatformNotReady from e
+    coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    async_add_entities(vents)
+    covers = []
 
-class FlairVent(CoverEntity):
-    """Representation of a Flair Vent as Cover."""
 
-    def __init__(self, vent):
-        self._vent = vent
+    for structure_id, structure_data in coordinator.data.structures.items():
+            """ Vents """
+            if structure_data.vents:
+                for vent_id, vent_data in structure_data.vents.items():
+                    covers.extend((
+                        Vent(coordinator, structure_id, vent_id),
+                    ))
+
+    async_add_entities(covers)
+
+
+class Vent(CoordinatorEntity, CoverEntity):
+    """ Representation of Vent device. """
+
+    def __init__(self, coordinator, structure_id, vent_id):
+        super().__init__(coordinator)
+        self.vent_id = vent_id
+        self.structure_id = structure_id
+
+
 
     @property
-    def device_info(self):
-        """Return device registry information for this entity."""
+    def vent_data(self) -> Vent:
+        """ Handle coordinator vent data. """
+
+        return self.coordinator.data.structures[self.structure_id].vents[self.vent_id]
+
+    @property
+    def structure_data(self) -> Structure:
+        """ Handle coordinator structure data. """
+
+        return self.coordinator.data.structures[self.structure_id]
+
+    @property
+    def room_data(self) -> Room:
+        """ Handle coordinator room data. """
+
+        room_id = self.vent_data.relationships['room']['data']['id']
+
+        return self.coordinator.data.structures[self.structure_id].rooms[room_id]
+
+    @property
+    def manual_struct_room(self) -> bool:
+        """ Return true if structure or room is in manual mode. """
+
+        if (self.structure_data.attributes['mode'] == 'manual') or \
+           (self.room_data.attributes['current-temperature-c'] is None):
+            return True
+        else:
+            return False
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
         return {
-            "identifiers": {(DOMAIN, self._vent.vent_id)},
-            "name": self._vent.vent_name,
+            "identifiers": {(DOMAIN, self.vent_data.id)},
+            "name": self.vent_data.attributes['name'],
             "manufacturer": "Flair",
-            "model": "Flair Vent",
+            "model": "Vent",
             "configuration_url": "https://my.flair.co/",
         }
+
     @property
-    def device_class(self):
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.vent_data.id) + '_vent'
+
+    @property
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Vent"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
+
+    @property
+    def device_class(self) -> CoverDeviceClass:
+        """ Return entity device class. """
+
         return CoverDeviceClass.DAMPER
 
     @property
-    def unique_id(self):
-        """Return the ID of this vent."""
-        return self._vent.vent_id
+    def icon(self) -> str:
+        """ Set vent icon. """
 
-    @property
-    def name(self):
-        """Return the name of the vent."""
-        return "flair_vent_" + self._vent.vent_name
-
-    @property
-    def icon(self):
-        """Set vent icon"""
         return 'mdi:air-filter'
 
     @property
-    def is_closed(self):
-        """Return true if vent is closed."""
-        return not self._vent.is_vent_open
+    def is_closed(self) -> bool:
+        """ Return true if vent percent open is zero. """
+
+        if self.vent_data.attributes['percent-open'] == 0:
+            return True
+        else:
+            return False
 
     @property
     def current_cover_tilt_position(self) -> int:
-        """Return the current percent open."""
-        if not self._vent.is_vent_open:
-            return 0
-        return self._vent.vent_percent
+        """ Return the current percent open. """
+
+        return self.vent_data.attributes['percent-open']
 
     @property
     def supported_features(self) -> int:
-        """Flag supported features."""
+        """ Vent supported features. """
+
         return CoverEntityFeature.OPEN_TILT | CoverEntityFeature.CLOSE_TILT | CoverEntityFeature.SET_TILT_POSITION
 
-    def open_cover_tilt(self, **kwargs) -> None:
-        """Open the vent."""
-        self._vent.set_vent_percentage(100)
-
-    def close_cover_tilt(self, **kwargs) -> None:
-        """Close the vent"""
-        self._vent.set_vent_percentage(0)
-
-    def set_cover_tilt_position(self, **kwargs):
-        """Set vent percentage open."""
-        if kwargs[ATTR_TILT_POSITION] == 0:
-            return self.close_cover_tilt()
-        elif kwargs[ATTR_TILT_POSITION] == 100:
-            return self.open_cover_tilt()
-        else:
-            return self._vent.set_vent_percentage(50)
-        
     @property
-    def available(self):
-        """Return true if device is available."""
-        if self._vent.is_active is None:
-            return False
-        return self._vent.is_active
+    def available(self) -> bool:
+        """ Return true if device is available. """
 
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._vent.refresh()
+        if self.vent_data.attributes['inactive'] == False:
+            return True
+        else:
+            return False
+
+    async def async_open_cover_tilt(self, **kwargs):
+        """ Open the vent. """
+
+        attributes = self.set_attributes(100)
+        await self.coordinator.client.update('vents', self.vent_data.id, attributes=attributes, relationships={})
+        self.vent_data.attributes['percent-open'] = 100
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
+
+        if not self.manual_struct_room:
+            LOGGER.warning(f'''Flair structure or room not in manual mode.
+                            Position changes to your Flair vent {self.vent_data.attributes["name"]}
+                            will eventually be reversed by Flair.
+                            '''
+                          )
+
+    async def async_close_cover_tilt(self, **kwargs):
+        """ Close the vent. """
+
+        attributes = self.set_attributes(0)
+        await self.coordinator.client.update('vents', self.vent_data.id, attributes=attributes, relationships={})
+        self.vent_data.attributes['percent-open'] = 0
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
+
+        if not self.manual_struct_room:
+            LOGGER.warning(f'''Flair structure or room not in manual mode.
+                            Position changes to your Flair vent {self.vent_data.attributes["name"]}
+                            will eventually be reversed by Flair.
+                            '''
+                          )
+
+    async def async_set_cover_tilt_position(self, **kwargs):
+        """ Set vent percentage open. """
+
+        if kwargs[ATTR_TILT_POSITION] == 0:
+            await self.async_close_cover_tilt()
+        elif kwargs[ATTR_TILT_POSITION] == 100:
+            await self.async_open_cover_tilt()
+        else:
+            attributes = self.set_attributes(50)
+            await self.coordinator.client.update('vents', self.vent_data.id, attributes=attributes, relationships={})
+            self.vent_data.attributes['percent-open'] = 50
+            self.async_write_ha_state()
+            await self.coordinator.async_request_refresh()
+
+            if not self.manual_struct_room:
+                LOGGER.warning(f'''Flair structure or room not in manual mode.
+                                Position changes to your Flair vent {self.vent_data.attributes["name"]}
+                                will eventually be reversed by Flair.
+                                '''
+                              )
+    
+    @staticmethod
+    def set_attributes(percent: int) -> dict[str, Any]:
+        """Creates attributes dict that is needed
+        by the flairaio update method.
+        """
+
+        attributes = {
+            "percent-open": percent,
+        }
+        return attributes
