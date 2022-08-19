@@ -1,591 +1,1036 @@
-"""Setting up Flair Puck and Vent Sensors"""
+""" Sensor platform for Flair integration."""
+from __future__ import annotations
 
-import logging
-from homeassistant.helpers.entity import EntityCategory
-from homeassistant.exceptions import PlatformNotReady
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.components.sensor import SensorEntity, STATE_CLASS_MEASUREMENT, SensorDeviceClass
-from homeassistant.const import TEMP_CELSIUS, LIGHT_LUX, PERCENTAGE, ELECTRIC_POTENTIAL_VOLT, SIGNAL_STRENGTH_DECIBELS_MILLIWATT, PRESSURE_KPA
+from typing import Any
 
+from datetime import datetime
+from flairaio.model import Puck, Room, Structure, Vent
 
-from .const import (
-    DOMAIN
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
 )
 
-_LOGGER = logging.getLogger(__name__)
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import(
+    ELECTRIC_POTENTIAL_VOLT,
+    LIGHT_LUX,
+    PERCENTAGE,
+    PRESSURE_KPA,
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    TEMP_CELSIUS,
+
+)
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import DOMAIN
+from .coordinator import FlairDataUpdateCoordinator
+
+async def async_setup_entry(
+    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
+) -> None:
+    """ Set Up Flair Sensor Entities. """
+
+    coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
+
+    sensors = []
 
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities):
-    """Set up Flair Pucks."""
-    flair = hass.data[DOMAIN]
+    for structure_id, structure_data in coordinator.data.structures.items():
+            """ Structures """
+            sensors.extend((
+                HomeAwayHoldUntil(coordinator, structure_id),
+            ))
 
-    pucks = []
-    vents = []
+            """ Pucks """
+            if structure_data.pucks:
+                for puck_id, puck_data in structure_data.pucks.items():
+                    sensors.extend((
+                        PuckTemp(coordinator, structure_id, puck_id),
+                        PuckHumidity(coordinator, structure_id, puck_id),
+                        PuckLight(coordinator, structure_id, puck_id),
+                        PuckVoltage(coordinator, structure_id, puck_id),
+                        PuckRSSI(coordinator, structure_id, puck_id),
+                        PuckPressure(coordinator, structure_id, puck_id)
+                    ))
+            """ Vents """
+            if structure_data.vents:
+                for vent_id, vent_data in structure_data.vents.items():
+                    sensors.extend((
+                        DuctTemp(coordinator, structure_id, vent_id),
+                        DuctPressure(coordinator, structure_id, vent_id),
+                        VentVoltage(coordinator, structure_id, vent_id),
+                        VentRSSI(coordinator, structure_id, vent_id)
+                    ))
+            """ Rooms """
+            if structure_data.rooms:
+                for room_id, room_data in structure_data.rooms.items():
+                    sensors.extend((
+                        HoldTempUntil(coordinator, structure_id, room_id),
+                    ))
 
-    try:
-        for puck in flair.pucks():
-            pucks.append(FlairPuck(puck))
-            pucks.append(PuckLight(puck))
-            pucks.append(PuckHumidity(puck))
-            pucks.append(PuckVoltage(puck))
-            pucks.append(PuckRSSI(puck))
-    except Exception as e:
-        _LOGGER.error("Failed to get Puck(s) from Flair servers")
-        raise PlatformNotReady from e
+    async_add_entities(sensors)
 
-    try:
-        for vent in flair.vents():
-            vents.append(FlairVentDuctTemp(vent))
-            vents.append(FlairVentDuctPressure(vent))
-            vents.append(FlairVentVoltage(vent))
-            vents.append(FlairVentRSSI(vent))
-    except Exception as e:
-        _LOGGER.error("Failed to get vents from Flair servers")
-        raise PlatformNotReady from e
+class HomeAwayHoldUntil(CoordinatorEntity, SensorEntity):
+    """ Representation of default hold duration setting. """
 
-    async_add_entities(pucks)
-    async_add_entities(vents)
+    def __init__(self, coordinator, structure_id):
+        super().__init__(coordinator)
+        self.structure_id = structure_id
 
-##########       PUCK SENSORS       ##########
-
-class FlairPuck(SensorEntity):
-    """Representation of a Flair Puck."""
-
-    def __init__(self, puck):
-        self._puck = puck
 
     @property
-    def device_info(self):
-        """Return device registry information for this entity."""
+    def structure_data(self) -> Structure:
+        """ Handle coordinator structure data. """
+
+        return self.coordinator.data.structures[self.structure_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
         return {
-            "identifiers": {(DOMAIN, self._puck.puck_id)},
-            "name": self._puck.puck_name,
+            "identifiers": {(DOMAIN, self.structure_data.id)},
+            "name": self.structure_data.attributes['name'],
             "manufacturer": "Flair",
-            "model": "Flair Puck",
+            "model": "Structure",
             "configuration_url": "https://my.flair.co/",
         }
 
     @property
-    def unique_id(self):
-        """Return the ID of this Puck."""
-        return self._puck.puck_id
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.structure_data.id) + '_home_away_hold_until'
 
     @property
-    def name(self):
-        """Return the name of the Puck if any."""
-        return 'flair_puck_' + self._puck.puck_name + "Temperature"
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Home/Away holding until"
 
     @property
-    def native_value(self):
-        """Returns Puck Temperature"""
-        if self._puck.current_temp is None:
-            return None
-        return self._puck.current_temp
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
 
     @property
-    def native_unit_of_measurement(self):
-        return TEMP_CELSIUS
-
-    @property
-    def device_class(self) -> SensorDeviceClass:
-        return SensorDeviceClass.TEMPERATURE
-
-    @property
-    def state_class(self):
-        return STATE_CLASS_MEASUREMENT
-
-    @property
-    def icon(self):
-        """Set puck icon"""
-        return 'mdi:circle-double'
-
-    @property
-    def available(self):
-        """Return true if device is available."""
-        if self._puck.is_active is None:
-            return False
-        return self._puck.is_active
-
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._puck.refresh()
-
-class PuckLight(SensorEntity):
-    """Representation of a Flair Puck Light Sensor."""
-
-    def __init__(self, puck):
-        self._puck = puck
-
-    @property
-    def device_info(self):
-        """Return device registry information for this entity."""
-        return {
-            "identifiers": {(DOMAIN, self._puck.puck_id)},
-            "name": self._puck.puck_name,
-            "manufacturer": "Flair",
-            "model": "Flair Puck",
-            "configuration_url": "https://my.flair.co/",
-        }
-
-    @property
-    def unique_id(self):
-        """Return the ID of this Puck."""
-        return self._puck.puck_id + '_light_sensor'
-
-    @property
-    def name(self):
-        """Return the name of the Puck if any."""
-        return 'flair_puck_' + self._puck.puck_name + 'Light Level'
-
-    @property
-    def native_value(self):
-        """Returns Puck Light Level in lux"""
-        """Convert value to Volts then multiply by 200 for 200 lux per Volt"""
-        return ((self._puck.light_level / 100) * 200) 
-
-    @property
-    def native_unit_of_measurement(self):
-        return LIGHT_LUX
+    def native_value(self) -> datetime:
+        """When home/away is set manually,
+        returns date/time when hold will end.
+        Only applicable if structure default hold duration
+        is anything other than until next scheduled event
+        """
+        
+        if self.structure_data.attributes['hold-until']:
+            return datetime.fromisoformat(self.structure_data.attributes['hold-until'])
 
     @property
     def device_class(self) -> SensorDeviceClass:
-        return SensorDeviceClass.ILLUMINANCE
+        """ Return entity device class. """
+
+        return SensorDeviceClass.TIMESTAMP
 
     @property
-    def state_class(self):
-        return STATE_CLASS_MEASUREMENT
+    def available(self) -> bool:
+        """Return true if home/away is set manually
+        and structure has a default hold duration
+        other than next event.
+        """
 
-    @property
-    def available(self):
-        """Return true if device is available."""
-        if self._puck.is_active is None:
-            return False
-        elif self._puck.is_active == False:
-            return False
-        elif (self._puck.is_active and self._puck.light_level_available):
+        if self.structure_data.attributes['hold-until']:
             return True
         else:
             return False
 
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._puck.refresh()
 
-class PuckHumidity(SensorEntity):
-    """Representation of a Flair Puck Humidity Sensor."""
+class PuckTemp(CoordinatorEntity, SensorEntity):
+    """ Representation of Puck Temperature. """
 
-    def __init__(self, puck):
-        self._puck = puck
+    def __init__(self, coordinator, structure_id, puck_id):
+        super().__init__(coordinator)
+        self.puck_id = puck_id
+        self.structure_id = structure_id
+
 
     @property
-    def device_info(self):
-        """Return device registry information for this entity."""
+    def puck_data(self) -> Puck:
+        """ Handle coordinator puck data. """
+
+        return self.coordinator.data.structures[self.structure_id].pucks[self.puck_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
         return {
-            "identifiers": {(DOMAIN, self._puck.puck_id)},
-            "name": self._puck.puck_name,
+            "identifiers": {(DOMAIN, self.puck_data.id)},
+            "name": self.puck_data.attributes['name'],
             "manufacturer": "Flair",
-            "model": "Flair Puck",
+            "model": "Puck",
             "configuration_url": "https://my.flair.co/",
         }
 
     @property
-    def unique_id(self):
-        """Return the ID of this Puck."""
-        return self._puck.puck_id + '_humidity_sensor'
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.puck_data.id) + '_temperature'
 
     @property
-    def name(self):
-        """Return the name of the Puck if any."""
-        return 'flair_puck_' + self._puck.puck_name + 'Humidity Sensor'
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Temperature"
 
     @property
-    def native_value(self):
-        """Returns Puck Humidity Measurement"""
-        if self._puck.current_humidity is None:
-            return None
-        return self._puck.current_humidity
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
 
     @property
-    def native_unit_of_measurement(self):
-        return PERCENTAGE
+    def native_value(self) -> float:
+        """ Return current temperature in Celsius """
+
+        return self.puck_data.attributes['current-temperature-c']
 
     @property
-    def device_class(self) -> SensorDeviceClass:
-        return SensorDeviceClass.HUMIDITY
+    def native_unit_of_measurement(self) -> str:
+        """ Return Celsius as the native unit. """
 
-    @property
-    def state_class(self):
-        return STATE_CLASS_MEASUREMENT
-
-    @property
-    def available(self):
-        """Return true if device is available."""
-        if self._puck.is_active is None:
-            return False
-        return self._puck.is_active
-
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._puck.refresh()
-
-class PuckVoltage(SensorEntity):
-    """Representation of a Flair Puck Humidity Sensor."""
-
-    def __init__(self, puck):
-        self._puck = puck
-
-    @property
-    def device_info(self):
-        """Return device registry information for this entity."""
-        return {
-            "identifiers": {(DOMAIN, self._puck.puck_id)},
-            "name": self._puck.puck_name,
-            "manufacturer": "Flair",
-            "model": "Flair Puck",
-            "configuration_url": "https://my.flair.co/",
-        }
-
-    @property
-    def unique_id(self):
-        """Return the ID of this Puck."""
-        return self._puck.puck_id + '_voltage_sensor'
-
-    @property
-    def name(self):
-        """Return the name of the Puck if any."""
-        return 'flair_puck_' + self._puck.puck_name + 'Voltage'
-
-    @property
-    def native_value(self):
-        """Returns Puck Voltage Measurement"""
-        if self._puck.voltage is None:
-            return None
-        return self._puck.voltage
-
-    @property
-    def native_unit_of_measurement(self):
-        return ELECTRIC_POTENTIAL_VOLT
-
-    @property
-    def device_class(self) -> SensorDeviceClass:
-        return SensorDeviceClass.VOLTAGE
-
-    @property
-    def state_class(self):
-        return STATE_CLASS_MEASUREMENT
-
-    @property
-    def entity_category(self):
-        return EntityCategory.DIAGNOSTIC
-
-    @property
-    def available(self):
-        """Return true if device is available."""
-        if self._puck.is_active is None:
-            return False
-        return self._puck.is_active
-
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._puck.refresh()
-
-class PuckRSSI(SensorEntity):
-    """Representation of a Flair Puck Humidity Sensor."""
-
-    def __init__(self, puck):
-        self._puck = puck
-
-    @property
-    def device_info(self):
-        """Return device registry information for this entity."""
-        return {
-            "identifiers": {(DOMAIN, self._puck.puck_id)},
-            "name": self._puck.puck_name,
-            "manufacturer": "Flair",
-            "model": "Flair Puck",
-            "configuration_url": "https://my.flair.co/",
-        }
-
-    @property
-    def unique_id(self):
-        """Return the ID of this Puck."""
-        return self._puck.puck_id + '_rssi_sensor'
-
-    @property
-    def name(self):
-        """Return the name of the Puck if any."""
-        return 'flair_puck_' + self._puck.puck_name + 'RSSI'
-
-    @property
-    def native_value(self):
-        """Returns Puck RSSI Measurement"""
-        if self._puck.rssi is None:
-            return None
-        return self._puck.rssi
-
-    @property
-    def native_unit_of_measurement(self):
-        return SIGNAL_STRENGTH_DECIBELS_MILLIWATT
-
-    @property
-    def device_class(self) -> SensorDeviceClass:
-        return SensorDeviceClass.SIGNAL_STRENGTH
-
-    @property
-    def entity_category(self):
-        return EntityCategory.DIAGNOSTIC
-
-    @property
-    def available(self):
-        """Return true if device is available."""
-        if self._puck.is_active is None:
-            return False
-        return self._puck.is_active
-
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._puck.refresh()
-
-##########       VENT SENSORS       ##########
-
-class FlairVentDuctTemp(SensorEntity):
-    """Representation of a Flair Vent Duct Temp Sensor."""
-
-    def __init__(self, vent):
-        self._vent = vent
-
-    @property
-    def device_info(self):
-        """Return device registry information for this entity."""
-        return {
-            "identifiers": {(DOMAIN, self._vent.vent_id)},
-            "name": self._vent.vent_name,
-            "manufacturer": "Flair",
-            "model": "Flair Vent",
-            "configuration_url": "https://my.flair.co/",
-        }
-
-    @property
-    def unique_id(self):
-        """Return the ID of this vent."""
-        return self._vent.vent_id + "_duct_temp"
-
-    @property
-    def name(self):
-        """Return the name of the Sensor"""
-        return 'flair_vent_' + self._vent.vent_name + "Duct Temperature"
-
-    @property
-    def native_value(self):
-        """Returns Duct Temperature"""
-        if self._vent.duct_temp is None:
-            return None
-        return self._vent.duct_temp
-
-    @property
-    def native_unit_of_measurement(self):
         return TEMP_CELSIUS
 
     @property
     def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
         return SensorDeviceClass.TEMPERATURE
 
     @property
-    def state_class(self):
-        return STATE_CLASS_MEASUREMENT
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
 
     @property
-    def available(self):
-        """Return true if device is available."""
-        if self._vent.is_active is None:
+    def available(self) -> bool:
+        """ Return true if device is available. """
+
+        if self.puck_data.attributes['inactive'] == False:
+            return True
+        else:
             return False
-        return self._vent.is_active
 
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._vent.refresh()
 
-class FlairVentDuctPressure(SensorEntity):
-    """Representation of a Flair Vent Duct Pressure Sensor."""
+class PuckHumidity(CoordinatorEntity, SensorEntity):
+    """ Representation of Puck Humidity. """
 
-    def __init__(self, vent):
-        self._vent = vent
+    def __init__(self, coordinator, structure_id, puck_id):
+        super().__init__(coordinator)
+        self.puck_id = puck_id
+        self.structure_id = structure_id
+
 
     @property
-    def device_info(self):
-        """Return device registry information for this entity."""
+    def puck_data(self) -> Puck:
+        """ Handle coordinator puck data. """
+
+        return self.coordinator.data.structures[self.structure_id].pucks[self.puck_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
         return {
-            "identifiers": {(DOMAIN, self._vent.vent_id)},
-            "name": self._vent.vent_name,
+            "identifiers": {(DOMAIN, self.puck_data.id)},
+            "name": self.puck_data.attributes['name'],
             "manufacturer": "Flair",
-            "model": "Flair Vent",
+            "model": "Puck",
             "configuration_url": "https://my.flair.co/",
         }
 
     @property
-    def unique_id(self):
-        """Return the ID of this vent."""
-        return self._vent.vent_id + "_duct_pressure"
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.puck_data.id) + '_humidity'
 
     @property
-    def name(self):
-        """Return the name of the Sensor"""
-        return 'flair_vent_' + self._vent.vent_name + "Duct Pressure"
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Humidity"
 
     @property
-    def native_value(self):
-        """Returns Duct Pressure"""
-        if self._vent.duct_pressure is None:
-            return None
-        return self._vent.duct_pressure
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
 
     @property
-    def native_unit_of_measurement(self):
-        return PRESSURE_KPA
+    def native_value(self) -> float:
+        """ Return current humidity. """
+
+        return self.puck_data.attributes['current-humidity']
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """ Return percent as the native unit. """
+
+        return PERCENTAGE
 
     @property
     def device_class(self) -> SensorDeviceClass:
-        return SensorDeviceClass.PRESSURE
+        """ Return entity device class. """
+
+        return SensorDeviceClass.HUMIDITY
 
     @property
-    def state_class(self):
-        return STATE_CLASS_MEASUREMENT
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
 
     @property
-    def available(self):
-        """Return true if device is available."""
-        if self._vent.is_active is None:
+    def available(self) -> bool:
+        """ Return true if device is available. """
+
+        if self.puck_data.attributes['inactive'] == False:
+            return True
+        else:
             return False
-        return self._vent.is_active
 
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._vent.refresh()
 
-class FlairVentVoltage(SensorEntity):
-    """Representation of a Flair Vent Voltage Sensor."""
+class PuckLight(CoordinatorEntity, SensorEntity):
+    """ Representation of Puck Light. """
 
-    def __init__(self, vent):
-        self._vent = vent
+    def __init__(self, coordinator, structure_id, puck_id):
+        super().__init__(coordinator)
+        self.puck_id = puck_id
+        self.structure_id = structure_id
+
 
     @property
-    def device_info(self):
-        """Return device registry information for this entity."""
+    def puck_data(self) -> Puck:
+        """ Handle coordinator puck data. """
+
+        return self.coordinator.data.structures[self.structure_id].pucks[self.puck_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
         return {
-            "identifiers": {(DOMAIN, self._vent.vent_id)},
-            "name": self._vent.vent_name,
+            "identifiers": {(DOMAIN, self.puck_data.id)},
+            "name": self.puck_data.attributes['name'],
             "manufacturer": "Flair",
-            "model": "Flair Vent",
+            "model": "Puck",
             "configuration_url": "https://my.flair.co/",
         }
 
     @property
-    def unique_id(self):
-        """Return the ID of this vent."""
-        return self._vent.vent_id + "_voltage"
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.puck_data.id) + '_light'
 
     @property
-    def name(self):
-        """Return the name of the Sensor"""
-        return 'flair_vent_' + self._vent.vent_name + "Voltage"
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Light"
 
     @property
-    def native_value(self):
-        """Returns Vent Voltage"""
-        if self._vent.voltage is None:
-            return None
-        return self._vent.voltage
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
 
     @property
-    def native_unit_of_measurement(self):
+    def native_value(self) -> float:
+        """Return current lux level. Convert value to Volts
+        then multiply by 200 for 200 lux per Volt.
+        """
+
+        return ((self.puck_data.current_reading['light'] / 100) * 200)
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """ Return lux as the native unit. """
+
+        return LIGHT_LUX
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
+        return SensorDeviceClass.ILLUMINANCE
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def available(self) -> bool:
+        """ Return true if device is available. """
+
+        if (self.puck_data.attributes['inactive'] == False) and \
+                (self.puck_data.current_reading['light'] is not None):
+            return True
+        else:
+            return False
+
+
+class PuckVoltage(CoordinatorEntity, SensorEntity):
+    """ Representation of Puck Voltage. """
+
+    def __init__(self, coordinator, structure_id, puck_id):
+        super().__init__(coordinator)
+        self.puck_id = puck_id
+        self.structure_id = structure_id
+
+
+    @property
+    def puck_data(self) -> Puck:
+        """ Handle coordinator puck data. """
+
+        return self.coordinator.data.structures[self.structure_id].pucks[self.puck_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
+        return {
+            "identifiers": {(DOMAIN, self.puck_data.id)},
+            "name": self.puck_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Puck",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.puck_data.id) + '_voltage'
+
+    @property
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Voltage"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
+
+    @property
+    def native_value(self) -> float:
+        """ Return voltage measurement. """
+
+        return self.puck_data.attributes['voltage']
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """ Return volts as the native unit. """
+
         return ELECTRIC_POTENTIAL_VOLT
 
     @property
     def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
         return SensorDeviceClass.VOLTAGE
 
     @property
-    def state_class(self):
-        return STATE_CLASS_MEASUREMENT
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
 
     @property
-    def entity_category(self):
+    def entity_category(self) -> EntityCategory:
+        """ Set category to diagnostic. """
+
         return EntityCategory.DIAGNOSTIC
 
     @property
-    def available(self):
-        """Return true if device is available."""
-        if self._vent.is_active is None:
+    def available(self) -> bool:
+        """ Return true if device is available. """
+
+        if self.puck_data.attributes['inactive'] == False:
+            return True
+        else:
             return False
-        return self._vent.is_active
 
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._vent.refresh()
 
-class FlairVentRSSI(SensorEntity):
-    """Representation of a Flair Vent RSSI Sensor."""
+class PuckRSSI(CoordinatorEntity, SensorEntity):
+    """ Representation of Puck Voltage. """
 
-    def __init__(self, vent):
-        self._vent = vent
+    def __init__(self, coordinator, structure_id, puck_id):
+        super().__init__(coordinator)
+        self.puck_id = puck_id
+        self.structure_id = structure_id
 
     @property
-    def device_info(self):
-        """Return device registry information for this entity."""
+    def puck_data(self) -> Puck:
+        """ Handle coordinator puck data. """
+
+        return self.coordinator.data.structures[self.structure_id].pucks[self.puck_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
         return {
-            "identifiers": {(DOMAIN, self._vent.vent_id)},
-            "name": self._vent.vent_name,
+            "identifiers": {(DOMAIN, self.puck_data.id)},
+            "name": self.puck_data.attributes['name'],
             "manufacturer": "Flair",
-            "model": "Flair Vent",
+            "model": "Puck",
             "configuration_url": "https://my.flair.co/",
         }
 
     @property
-    def unique_id(self):
-        """Return the ID of this vent."""
-        return self._vent.vent_id + "_rssi_sensor"
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.puck_data.id) + '_rssi'
 
     @property
-    def name(self):
-        """Return the name of the Sensor"""
-        return 'flair_vent_' + self._vent.vent_name + "RSSI"
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "RSSI"
 
     @property
-    def native_value(self):
-        """Returns Vent Voltage"""
-        if self._vent.rssi is None:
-            return None
-        return self._vent.rssi
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
 
     @property
-    def native_unit_of_measurement(self):
+    def native_value(self) -> float:
+        """ Return RSSI reading. """
+
+        return self.puck_data.attributes['current-rssi']
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """ Return dBm as the native unit. """
+
         return SIGNAL_STRENGTH_DECIBELS_MILLIWATT
 
     @property
     def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
         return SensorDeviceClass.SIGNAL_STRENGTH
 
     @property
-    def entity_category(self):
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def entity_category(self) -> EntityCategory:
+        """ Set category to diagnostic. """
+
         return EntityCategory.DIAGNOSTIC
 
     @property
-    def available(self):
-        """Return true if device is available."""
-        if self._vent.is_active is None:
-            return False
-        return self._vent.is_active
+    def available(self) -> bool:
+        """ Return true if device is available."""
 
-    def update(self):
-        """Update automation state."""
-        _LOGGER.info("Refreshing device state")
-        self._vent.refresh()
+        if self.puck_data.attributes['inactive'] == False:
+            return True
+        else:
+            return False
+
+
+class PuckPressure(CoordinatorEntity, SensorEntity):
+    """ Representation of Puck pressure reading. """
+
+    def __init__(self, coordinator, structure_id, puck_id):
+        super().__init__(coordinator)
+        self.puck_id = puck_id
+        self.structure_id = structure_id
+
+    @property
+    def puck_data(self) -> Puck:
+        """ Handle coordinator puck data. """
+
+        return self.coordinator.data.structures[self.structure_id].pucks[self.puck_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
+        return {
+            "identifiers": {(DOMAIN, self.puck_data.id)},
+            "name": self.puck_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Puck",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.puck_data.id) + '_pressure'
+
+    @property
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Pressure"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
+
+    @property
+    def native_value(self) -> float:
+        """ Return pressure reading. """
+
+        return round(self.puck_data.current_reading['room-pressure'], 2)
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """ Return kPa as the native unit. """
+
+        return PRESSURE_KPA
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
+        return SensorDeviceClass.PRESSURE
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def available(self) -> bool:
+        """ Return true if device is available. """
+
+        if self.puck_data.attributes['inactive'] == False:
+            return True
+        else:
+            return False
+
+class DuctTemp(CoordinatorEntity, SensorEntity):
+    """ Representation of Duct Temperature. """
+
+    def __init__(self, coordinator, structure_id, vent_id):
+        super().__init__(coordinator)
+        self.vent_id = vent_id
+        self.structure_id = structure_id
+
+
+    @property
+    def vent_data(self) -> Vent:
+        """ Handle coordinator vent data. """
+
+        return self.coordinator.data.structures[self.structure_id].vents[self.vent_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
+        return {
+            "identifiers": {(DOMAIN, self.vent_data.id)},
+            "name": self.vent_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Vent",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.vent_data.id) + '_duct_temperature'
+
+    @property
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Duct temperature"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
+
+    @property
+    def native_value(self) -> float:
+        """ Return current temperature in Celsius. """
+
+        return self.vent_data.current_reading['duct-temperature-c']
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """ Return Celsius as the native unit. """
+
+        return TEMP_CELSIUS
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
+        return SensorDeviceClass.TEMPERATURE
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def available(self) -> bool:
+        """ Return true if device is available. """
+
+        if self.vent_data.attributes['inactive'] == False:
+            return True
+        else:
+            return False
+
+class DuctPressure(CoordinatorEntity, SensorEntity):
+    """ Representation of Duct Pressure. """
+
+    def __init__(self, coordinator, structure_id, vent_id):
+        super().__init__(coordinator)
+        self.vent_id = vent_id
+        self.structure_id = structure_id
+
+
+    @property
+    def vent_data(self) -> Vent:
+        """ Handle coordinator vent data. """
+
+        return self.coordinator.data.structures[self.structure_id].vents[self.vent_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
+        return {
+            "identifiers": {(DOMAIN, self.vent_data.id)},
+            "name": self.vent_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Vent",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.vent_data.id) + '_duct_pressure'
+
+    @property
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Duct pressure"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
+
+    @property
+    def native_value(self) -> float:
+        """ Return current pressure in kPa. """
+
+        return round(self.vent_data.current_reading['duct-pressure'], 2)
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """ Return kPa as the native unit. """
+
+        return PRESSURE_KPA
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
+        return SensorDeviceClass.PRESSURE
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def available(self) -> bool:
+        """ Return true if device is available. """
+
+        if self.vent_data.attributes['inactive'] == False:
+            return True
+        else:
+            return False
+
+class VentVoltage(CoordinatorEntity, SensorEntity):
+    """ Representation of Vent Voltage. """
+
+    def __init__(self, coordinator, structure_id, vent_id):
+        super().__init__(coordinator)
+        self.vent_id = vent_id
+        self.structure_id = structure_id
+
+
+    @property
+    def vent_data(self) -> Vent:
+        """ Handle coordinator vent data. """
+
+        return self.coordinator.data.structures[self.structure_id].vents[self.vent_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
+        return {
+            "identifiers": {(DOMAIN, self.vent_data.id)},
+            "name": self.vent_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Vent",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.vent_data.id) + '_voltage'
+
+    @property
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Voltage"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
+
+    @property
+    def native_value(self) -> float:
+        """ Return voltage measurement. """
+
+        return self.vent_data.attributes['voltage']
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """ Return volts as the native unit. """
+
+        return ELECTRIC_POTENTIAL_VOLT
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
+        return SensorDeviceClass.VOLTAGE
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def entity_category(self) -> EntityCategory:
+        """ Set category to diagnostic. """
+
+        return EntityCategory.DIAGNOSTIC
+
+    @property
+    def available(self) -> bool:
+        """ Return true if device is available. """
+
+        if self.vent_data.attributes['inactive'] == False:
+            return True
+        else:
+            return False
+
+
+class VentRSSI(CoordinatorEntity, SensorEntity):
+    """ Representation of Vent RSSI. """
+
+    def __init__(self, coordinator, structure_id, vent_id):
+        super().__init__(coordinator)
+        self.vent_id = vent_id
+        self.structure_id = structure_id
+
+
+    @property
+    def vent_data(self) -> Vent:
+        """ Handle coordinator vent data. """
+
+        return self.coordinator.data.structures[self.structure_id].vents[self.vent_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
+        return {
+            "identifiers": {(DOMAIN, self.vent_data.id)},
+            "name": self.vent_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Vent",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.vent_data.id) + '_rssi'
+
+    @property
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "RSSI"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
+
+    @property
+    def native_value(self) -> int:
+        """ Return RSSI reading. """
+
+        return self.vent_data.attributes['current-rssi']
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """ Return dBm as the native unit. """
+
+        return SIGNAL_STRENGTH_DECIBELS_MILLIWATT
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
+        return SensorDeviceClass.SIGNAL_STRENGTH
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """ Return the type of state class. """
+
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def entity_category(self) -> EntityCategory:
+        """ Set category to diagnostic. """
+
+        return EntityCategory.DIAGNOSTIC
+
+    @property
+    def available(self) -> bool:
+        """ Return true if device is available. """
+
+        if self.vent_data.attributes['inactive'] == False:
+            return True
+        else:
+            return False
+
+
+
+class HoldTempUntil(CoordinatorEntity, SensorEntity):
+    """ Representation of Room Temperature Hold End Time. """
+
+    def __init__(self, coordinator, structure_id, room_id):
+        super().__init__(coordinator)
+        self.room_id = room_id
+        self.structure_id = structure_id
+
+
+    @property
+    def room_data(self) -> Room:
+        """ Handle coordinator room data. """
+
+        return self.coordinator.data.structures[self.structure_id].rooms[self.room_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
+        return {
+            "identifiers": {(DOMAIN, self.room_data.id)},
+            "name": self.room_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Room",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.room_data.id) + '_hold_until'
+
+    @property
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "Temperature holding until"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
+
+    @property
+    def native_value(self) -> datetime:
+        """When room temperature is set manually,
+        returns date/time when hold will end.
+        """
+        
+        if self.room_data.attributes['hold-until']:
+            return datetime.fromisoformat(self.room_data.attributes['hold-until'])
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """ Return entity device class. """
+
+        return SensorDeviceClass.TIMESTAMP
+
+    @property
+    def available(self) -> bool:
+        """Return true if temp is set manually
+        and structure has a default hold duration
+        other than next event.
+        """
+
+        if self.room_data.attributes['hold-until']:
+            return True
+        else:
+            return False
