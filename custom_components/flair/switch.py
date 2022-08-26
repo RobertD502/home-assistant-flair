@@ -38,6 +38,20 @@ async def async_setup_entry(
                         PuckLock(coordinator, structure_id, puck_id),
                     ))
 
+            """ HVAC Units """
+            if structure_data.hvac_units:
+                for hvac_id, hvac_data in structure_data.hvac_units.items():
+                    try:
+                        structure_data.hvac_units[hvac_id].attributes['constraints']['temperature-scale']
+                    except KeyError:
+                        unit_name = structure_data.hvac_units[hvac_id].attributes['name']
+                        LOGGER.error(f'''Flair HVAC Unit {unit_name} does not have a temperature scale.
+                                     Contact Flair customer support to get this fixed.''')
+                        continue
+                    switches.extend((
+                        HVACPower(coordinator, structure_id, hvac_id),
+                    ))
+
     async_add_entities(switches)
 
 
@@ -221,4 +235,109 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
+class HVACPower(CoordinatorEntity, SwitchEntity):
+    """ Representation of HVAC Unit Power. """
 
+    def __init__(self, coordinator, structure_id, hvac_id):
+        super().__init__(coordinator)
+        self.hvac_id = hvac_id
+        self.structure_id = structure_id
+
+
+    @property
+    def hvac_data(self) -> HVACUnit:
+        """ Handle coordinator HVAC unit data. """
+
+        return self.coordinator.data.structures[self.structure_id].hvac_units[self.hvac_id]
+
+    @property
+    def structure_data(self) -> Structure:
+        """ Handle coordinator structure data. """
+
+        return self.coordinator.data.structures[self.structure_id]
+
+    @property
+    def puck_data(self) -> Puck:
+        """ Handle coordinator puck data. """
+
+        puck_id = self.hvac_data.relationships['puck']['data']['id']
+
+        return self.coordinator.data.structures[self.structure_id].pucks[puck_id]
+
+    @property
+    def structure_mode(self) -> str:
+        """ Return structure mode of associated structure. """
+
+        return self.structure_data.attributes['mode']
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """ Return device registry information for this entity. """
+
+        return {
+            "identifiers": {(DOMAIN, self.hvac_data.id)},
+            "name": self.hvac_data.attributes['name'],
+            "manufacturer": self.hvac_data.attributes['make-name'],
+            "model": "HVAC Unit",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """ Sets unique ID for this entity. """
+
+        return str(self.hvac_data.id) + '_hvac_power'
+
+    @property
+    def name(self) -> str:
+        """ Return name of the entity. """
+
+        return "HVAC power"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """ Indicate that entity has name defined. """
+
+        return True
+
+    @property
+    def icon(self) -> str:
+        """ Set hvac icon. """
+
+        return 'mdi:hvac'
+
+    @property
+    def is_on(self) -> bool:
+        """ Return if HVAC unit is on. """
+
+        return self.hvac_data.attributes['power'] == 'On'
+
+    @property
+    def available(self) -> str:
+        """ Return true if puck is active and
+        structure is set to manual mode.
+        """
+
+        puck_inactive = self.puck_data.attributes['inactive']
+        if (puck_inactive == False) and (self.structure_mode == 'manual'):
+            return True
+        else:
+            return False
+
+    async def async_turn_on(self, **kwargs):
+        """ Turn on HVAC unit. """
+
+        attributes = {"power": "On"}
+        await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
+        self.hvac_data.attributes['power'] == 'On'
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs):
+        """ Turn off HVAC unit. """
+
+        attributes = {"power": "Off"}
+        await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
+        self.hvac_data.attributes['power'] == 'Off'
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
