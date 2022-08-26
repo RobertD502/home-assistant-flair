@@ -133,9 +133,10 @@ Each IR HVAC unit has the following entities:
 | Entity      | Entity Type | Additional Comments |
 |-------------| --- |---------------------|
 | `HVAC unit` | `Climate` | SEE NOTE BELOW      |
+| `HVAC power` | `Switch` | Only available if structure mode is set to manual      |
 
 > To fully control your unit, the associated Flair structure needs to be in `Manual Mode`.
 > 
 > If your structure is set to `Auto Mode`: you will only be able to control `Fan speed` and `Swing` (if available for your unit). In addition, mini split set points are controlled by rooms if a Flair structure is set to `Auto Mode`. Changing the temperature of this climate entity will result in changing the room set point when in `Auto Mode`. You also cannot change the mode as this is controlled at the Structure level when in auto mode.
 > 
-> If your structure is set to `Manual Mode`: You can only change the temp, mode, fan speed, and swing when your unit is powered on. If your structure is in manual mode, you can turn your mini split on/off by changing the `Preset` setting to either "On" or "Off".
+> If your structure is set to `Manual Mode`: You can only change the temp, mode, fan speed, and swing when your unit is powered on. If your structure is in manual mode, you can turn your mini split on/off by utilizing the `HVAC power` switch entity.
