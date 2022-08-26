@@ -214,7 +214,7 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
             self.async_write_ha_state()
             return await self.coordinator.async_request_refresh()
         else:
-            LOGGER.error("Missing valid arguments for set_temperature in %s", kwargs)
+            LOGGER.error(f'Missing valid arguments for set_temperature in {kwargs}')
 
     async def async_set_hvac_mode(self, hvac_mode):
         """ Set new target hvac mode. """
@@ -380,7 +380,6 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         """ Return the current hvac_mode. """
 
         mode = self.hvac_data.attributes['mode']
-
         if mode in HVAC_CURRENT_MODE_MAP:
             return HVAC_CURRENT_MODE_MAP[mode]
 
@@ -488,21 +487,6 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         return self.room_data.attributes['current-humidity']
 
     @property
-    def preset_mode(self) -> str:
-        """ Turn HVAC unit on or off when structure in manual mode. """
-
-        if self.is_on:
-            return 'On'
-        else:
-            return 'Off'
-
-    @property
-    def preset_modes(self) -> list:
-        """ List of preset power modes. """
-
-        return ['On', 'Off']
-
-    @property
     def supported_features(self) -> int:
         """ HVAC unit supported features. """
 
@@ -521,12 +505,12 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             if self.structure_mode == 'manual':
                 if self.is_on:
                     if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
+                        return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
                     else:
-                        return ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
-                # Preset mode allows users to turn HVAC unit on so they can change temp/mode.
+                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
                 else:
-                    return ClimateEntityFeature.PRESET_MODE
+                    return ClimateEntityFeature.TARGET_TEMPERATURE
+
         """ if only swing is available. """
 
         if self.swing_available:
@@ -539,11 +523,11 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             if self.structure_mode == 'manual':
                 if self.is_on:
                     if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.SWING_MODE
+                        return ClimateEntityFeature.SWING_MODE
                     else:
-                        return ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE
+                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE
                 else:
-                    return ClimateEntityFeature.PRESET_MODE
+                    return ClimateEntityFeature.TARGET_TEMPERATURE
 
         """ If only fan speeds are available. """
         if self.available_fan_speeds:
@@ -556,11 +540,11 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             if self.structure_mode == 'manual':
                 if self.is_on:
                     if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.FAN_MODE
+                        return ClimateEntityFeature.FAN_MODE
                     else:
-                        return ClimateEntityFeature.PRESET_MODE | ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
+                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
                 else:
-                    return ClimateEntityFeature.PRESET_MODE
+                    return ClimateEntityFeature.TARGET_TEMPERATURE
 
     @property
     def available(self) -> bool:
@@ -570,16 +554,6 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             return True
         else:
             return False
-
-    async def async_set_preset_mode(self, preset_mode):
-        """ Set HVAC unit on or off when in manual structure mode. """
-
-        attributes = self.set_attributes('power', preset_mode, False)
-        await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
-        self.hvac_data.attributes['power'] = preset_mode
-        self.async_write_ha_state()
-        await self.coordinator.async_request_refresh()
-
 
     async def async_set_temperature(self, **kwargs):
         """ Set new target temperature. """
@@ -628,6 +602,9 @@ class HVAC(CoordinatorEntity, ClimateEntity):
 
         mode = HASS_HVAC_MODE_TO_FLAIR.get(hvac_mode)
         attributes = self.set_attributes('hvac_mode', mode, False)
+
+        if hvac_mode == HVACMode.DRY:
+            await self.async_set_fan_mode(FAN_AUTO)
         await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
         self.hvac_data.attributes['mode'] = mode
         self.async_write_ha_state()
@@ -645,12 +622,20 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             self.async_write_ha_state()
             await self.coordinator.async_request_refresh()
         if self.structure_mode == 'manual':
-            mode = HASS_HVAC_FAN_SPEED_TO_FLAIR.get(fan_mode)
-            attributes = self.set_attributes('fan_mode', mode, False)
-            await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
-            self.hvac_data.attributes['fan-speed'] = mode
-            self.async_write_ha_state()
-            await self.coordinator.async_request_refresh()
+            if self.hvac_mode == HVACMode.DRY:
+                mode = HASS_HVAC_FAN_SPEED_TO_FLAIR.get(FAN_AUTO)
+                attributes = self.set_attributes('fan_mode', mode, False)
+                await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
+                self.hvac_data.attributes['fan-speed'] = mode
+                self.async_write_ha_state()
+                await self.coordinator.async_request_refresh()
+            else:
+                mode = HASS_HVAC_FAN_SPEED_TO_FLAIR.get(fan_mode)
+                attributes = self.set_attributes('fan_mode', mode, False)
+                await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
+                self.hvac_data.attributes['fan-speed'] = mode
+                self.async_write_ha_state()
+                await self.coordinator.async_request_refresh()
 
     async def async_set_swing_mode(self, swing_mode):
         """ Set new target swing operation. """
@@ -694,10 +679,6 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             if setting == 'temp':
                 attributes = {
                     "temperature": value,
-                }
-            if setting == 'power':
-                attributes = {
-                    "power": value,
                 }
             if setting == 'hvac_mode':
                 attributes = {
