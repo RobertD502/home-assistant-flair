@@ -29,11 +29,17 @@ as a Custom Repository (use **Integration** as the category).
 Copy the `flair` directory, from `custom_components` in this repository,
 and place it inside your Home Assistant Core installation's `custom_components` directory.
 
+`Note`: If installing manually, in order to be alerted about new releases, you will need to subscribe to releases from this repository. 
+
 ## Setup
 1. Install this integration.
 2. Navigate to the Home Assistant Integrations page (Settings --> Devices & Services)
 3. Click the `+ ADD INTEGRATION` button in the lower right-hand corner
 4. Search for `Flair`
+
+Alternatively, click on the button below to add the integration:
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=flair)
 
 # Devices
 
