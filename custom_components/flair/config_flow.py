@@ -68,6 +68,8 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                     },
                 )
+                self.entry.version = 2
+                self.hass.config_entries._async_schedule_save()
                 await self.hass.config_entries.async_reload(self.entry.entry_id)
                 return self.async_abort(reason="reauth_successful")
                 errors["base"] = "incorrect_id_secret"
