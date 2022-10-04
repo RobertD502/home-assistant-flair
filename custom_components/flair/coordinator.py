@@ -1,4 +1,4 @@
-""" DataUpdateCoordinator for the Flair integration. """
+"""DataUpdateCoordinator for the Flair integration."""
 from __future__ import annotations
 
 from datetime import timedelta
@@ -18,13 +18,14 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .const import DEFAULT_SCAN_INTERVAL, DOMAIN, LOGGER, TIMEOUT
 
+
 class FlairDataUpdateCoordinator(DataUpdateCoordinator):
-    """ Flair Data Update Coordinator. """
+    """Flair Data Update Coordinator."""
 
     data: FlairData
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        """ Initialize the Flair coordinator. """
+        """Initialize the Flair coordinator."""
 
         self.client = FlairClient(
             entry.data[CONF_CLIENT_ID],
@@ -40,12 +41,12 @@ class FlairDataUpdateCoordinator(DataUpdateCoordinator):
         )
 
     async def _async_update_data(self) -> FlairData:
-        """ Fetch data from Flair. """
+        """Fetch data from Flair."""
 
         try:
             data = await self.client.get_flair_data()
         except FlairAuthError as error:
-            raise ConfigEntryAuthFailed from error
+            raise ConfigEntryAuthFailed(error) from error
         except FlairError as error:
             raise UpdateFailed(error) from error
         if not data.structures:
