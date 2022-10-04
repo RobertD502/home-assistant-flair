@@ -43,7 +43,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if entry.version == 2:
         LOGGER.info("Migrating Flair config entry to version 2.1")
-        # Prior to release 0.1.2.1, unique_id was not set when a user migrated
+        # Prior to release 0.1.3, unique_id was not set when a user migrated
         # from OAuth1.0 to 2.0 via reauthentication. In this case, if not present,
         # unique_id needs to be set and entry version set to latest version.
         if not entry.unique_id:
