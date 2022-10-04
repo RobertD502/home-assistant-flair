@@ -1,6 +1,6 @@
-""" Config Flow for Flair integration """
-
+"""Config Flow for Flair integration."""
 from __future__ import annotations
+
 from collections.abc import Mapping
 from typing import Any
 
@@ -15,6 +15,7 @@ import homeassistant.helpers.config_validation as cv
 from .const import DEFAULT_NAME, DOMAIN
 from .util import NoStructuresError, NoUserError, async_validate_api
 
+
 DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_CLIENT_ID): cv.string,
@@ -24,14 +25,14 @@ DATA_SCHEMA = vol.Schema(
 
 
 class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """ Handle a config flow for Flair integration. """
+    """Handle a config flow for Flair integration."""
 
-    VERSION = 2
+    VERSION = 2.1
 
     entry: config_entries.ConfigEntry | None
 
     async def async_step_reauth(self, entry_data: Mapping[str, Any]) -> FlowResult:
-        """ Handle re-authentication with Flair. """
+        """Handle re-authentication with Flair."""
 
         self.entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         return await self.async_step_reauth_confirm()
@@ -39,7 +40,7 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_reauth_confirm(
             self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """ Confirm re-authentication with Flair. """
+        """Confirm re-authentication with Flair."""
 
         errors: dict[str, str] = {}
 
@@ -59,20 +60,22 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 assert self.entry is not None
 
+                if self.entry.version == 1:
+                    self.entry.version = 2.1
+                    self.entry.unique_id = client_id
+                    self.hass.config_entries._async_schedule_save()
+
                 self.hass.config_entries.async_update_entry(
                     self.entry,
                     data={
                         **self.entry.data,
                         CONF_CLIENT_ID: client_id,
                         CONF_CLIENT_SECRET: client_secret,
-
                     },
                 )
-                self.entry.version = 2
-                self.hass.config_entries._async_schedule_save()
+
                 await self.hass.config_entries.async_reload(self.entry.entry_id)
                 return self.async_abort(reason="reauth_successful")
-                errors["base"] = "incorrect_id_secret"
 
         return self.async_show_form(
             step_id="reauth_confirm",
@@ -83,12 +86,11 @@ class FlairConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
             self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """ Handle the initial step. """
+        """Handle the initial step."""
 
         errors: dict[str, str] = {}
 
         if user_input:
-
             client_id = user_input[CONF_CLIENT_ID]
             client_secret = user_input[CONF_CLIENT_SECRET]
             try:
