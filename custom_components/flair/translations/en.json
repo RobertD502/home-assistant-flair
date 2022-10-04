@@ -6,7 +6,6 @@
         },
         "error": {
             "cannot_connect": "Failed to connect",
-            "incorrect_id_secret": "Invalid Client ID and/or Client Secret for selected account",
             "invalid_auth": "Invalid authentication. Are your credentials correct?",
             "no_structures": "No structures discovered",
             "no_user": "No user found on account"
