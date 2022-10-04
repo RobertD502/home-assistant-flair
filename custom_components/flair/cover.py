@@ -1,16 +1,16 @@
-""" Cover platform for Flair integration. """
+"""Cover platform for Flair integration."""
 from __future__ import annotations
 
 from typing import Any
 
 from flairaio.model import Room, Structure, Vent
+
 from homeassistant.components.cover import (
     ATTR_TILT_POSITION,
     CoverDeviceClass,
     CoverEntity,
     CoverEntityFeature,
 )
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -23,15 +23,14 @@ from .coordinator import FlairDataUpdateCoordinator
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """ Set Up Flair Cover Entities. """
+    """Set Up Flair Cover Entities."""
 
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     covers = []
 
-
     for structure_id, structure_data in coordinator.data.structures.items():
-            """ Vents """
+            # Vents
             if structure_data.vents:
                 for vent_id, vent_data in structure_data.vents.items():
                     covers.extend((
@@ -42,38 +41,35 @@ async def async_setup_entry(
 
 
 class Vent(CoordinatorEntity, CoverEntity):
-    """ Representation of Vent device. """
+    """Representation of Vent device."""
 
     def __init__(self, coordinator, structure_id, vent_id):
         super().__init__(coordinator)
         self.vent_id = vent_id
         self.structure_id = structure_id
 
-
-
     @property
     def vent_data(self) -> Vent:
-        """ Handle coordinator vent data. """
+        """Handle coordinator vent data."""
 
         return self.coordinator.data.structures[self.structure_id].vents[self.vent_id]
 
     @property
     def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
+        """Handle coordinator structure data."""
 
         return self.coordinator.data.structures[self.structure_id]
 
     @property
     def room_data(self) -> Room:
-        """ Handle coordinator room data. """
+        """Handle coordinator room data."""
 
         room_id = self.vent_data.relationships['room']['data']['id']
-
         return self.coordinator.data.structures[self.structure_id].rooms[room_id]
 
     @property
     def manual_struct_room(self) -> bool:
-        """ Return true if structure or room is in manual mode. """
+        """Return true if structure or room is in manual mode."""
 
         if (self.structure_data.attributes['mode'] == 'manual') or \
            (self.room_data.attributes['current-temperature-c'] is None):
@@ -83,7 +79,7 @@ class Vent(CoordinatorEntity, CoverEntity):
 
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.vent_data.id)},
@@ -95,37 +91,37 @@ class Vent(CoordinatorEntity, CoverEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.vent_data.id) + '_vent'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "Vent"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def device_class(self) -> CoverDeviceClass:
-        """ Return entity device class. """
+        """Return entity device class."""
 
         return CoverDeviceClass.DAMPER
 
     @property
     def icon(self) -> str:
-        """ Set vent icon. """
+        """Set vent icon."""
 
         return 'mdi:air-filter'
 
     @property
     def is_closed(self) -> bool:
-        """ Return true if vent percent open is zero. """
+        """Return true if vent percent open is zero."""
 
         if self.vent_data.attributes['percent-open'] == 0:
             return True
@@ -134,19 +130,19 @@ class Vent(CoordinatorEntity, CoverEntity):
 
     @property
     def current_cover_tilt_position(self) -> int:
-        """ Return the current percent open. """
+        """Return the current percent open."""
 
         return self.vent_data.attributes['percent-open']
 
     @property
     def supported_features(self) -> int:
-        """ Vent supported features. """
+        """Vent supported features."""
 
         return CoverEntityFeature.OPEN_TILT | CoverEntityFeature.CLOSE_TILT | CoverEntityFeature.SET_TILT_POSITION
 
     @property
     def available(self) -> bool:
-        """ Return true if device is available. """
+        """Return true if device is available."""
 
         if self.vent_data.attributes['inactive'] == False:
             return True
@@ -154,7 +150,7 @@ class Vent(CoordinatorEntity, CoverEntity):
             return False
 
     async def async_open_cover_tilt(self, **kwargs):
-        """ Open the vent. """
+        """Open the vent."""
 
         attributes = self.set_attributes(100)
         await self.coordinator.client.update('vents', self.vent_data.id, attributes=attributes, relationships={})
@@ -170,7 +166,7 @@ class Vent(CoordinatorEntity, CoverEntity):
                           )
 
     async def async_close_cover_tilt(self, **kwargs):
-        """ Close the vent. """
+        """Close the vent."""
 
         attributes = self.set_attributes(0)
         await self.coordinator.client.update('vents', self.vent_data.id, attributes=attributes, relationships={})
@@ -186,7 +182,7 @@ class Vent(CoordinatorEntity, CoverEntity):
                           )
 
     async def async_set_cover_tilt_position(self, **kwargs):
-        """ Set vent percentage open. """
+        """Set vent percentage open."""
 
         if kwargs[ATTR_TILT_POSITION] == 0:
             await self.async_close_cover_tilt()
@@ -205,7 +201,7 @@ class Vent(CoordinatorEntity, CoverEntity):
                                 will eventually be reversed by Flair.
                                 '''
                               )
-    
+
     @staticmethod
     def set_attributes(percent: int) -> dict[str, Any]:
         """Creates attributes dict that is needed
