@@ -1,12 +1,11 @@
-""" Select platform for Flair integration. """
+"""Select platform for Flair integration."""
 from __future__ import annotations
 
 from typing import Any
 
-
 from flairaio.model import Puck, Room, Structure
-from homeassistant.components.select import SelectEntity
 
+from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
@@ -22,11 +21,11 @@ from .const import(
     PUCK_BACKGROUND,
     ROOM_MODES,
     SET_POINT_CONTROLLER,
-    STRUCTURE_MODES,
     SYSTEM_MODES,
     TEMPERATURE_SCALES,
 )
 from .coordinator import FlairDataUpdateCoordinator
+
 
 DEFAULT_HOLD_TO_FLAIR = {v: k for (k, v) in DEFAULT_HOLD_DURATION.items()}
 HOME_AWAY_SET_BY_TO_FLAIR = {v: k for (k, v) in HOME_AWAY_SET_BY.items()}
@@ -37,17 +36,15 @@ TEMP_SCALE_TO_FLAIR = {v: k for (k, v) in TEMPERATURE_SCALES.items()}
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
-    """ Set Up Flair Select Entities. """
+    """Set Up Flair Select Entities."""
 
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     selects = []
 
-
     for structure_id, structure_data in coordinator.data.structures.items():
-            """ Structures """
+            # Structures
             selects.extend((
-                StructureMode(coordinator, structure_id),
                 SystemMode(coordinator, structure_id),
                 HomeAwayMode(coordinator, structure_id),
                 HomeAwaySetBy(coordinator, structure_id),
@@ -57,14 +54,14 @@ async def async_setup_entry(
                 AwayMode(coordinator, structure_id),
             ))
 
-            """ Rooms """
+            # Rooms
             if structure_data.rooms:
                 for room_id, room_data in structure_data.rooms.items():
                     selects.extend((
                         RoomActivity(coordinator, structure_id, room_id),
                     ))
 
-            """ Pucks """
+            # Pucks
             if structure_data.pucks:
                 for puck_id, puck_data in structure_data.pucks.items():
                     selects.extend((
@@ -75,116 +72,22 @@ async def async_setup_entry(
     async_add_entities(selects)
 
 
-class StructureMode(CoordinatorEntity, SelectEntity):
-    """ Representation of Structure Mode. """
-
-    def __init__(self, coordinator, structure_id):
-        super().__init__(coordinator)
-        self.structure_id = structure_id
-
-
-    @property
-    def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
-
-        return self.coordinator.data.structures[self.structure_id]
-
-    @property
-    def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
-
-        return {
-            "identifiers": {(DOMAIN, self.structure_data.id)},
-            "name": self.structure_data.attributes['name'],
-            "manufacturer": "Flair",
-            "model": "Structure",
-            "configuration_url": "https://my.flair.co/",
-        }
-
-    @property
-    def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
-
-        return str(self.structure_data.id) + '_structure_mode'
-
-    @property
-    def name(self) -> str:
-        """ Return name of the entity. """
-
-        return "Structure mode"
-
-    @property
-    def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
-
-        return True
-
-    @property
-    def icon(self) -> str:
-        """ Set icon. """
-
-        return 'mdi:sun-snowflake'
-
-    @property
-    def current_option(self) -> str:
-        """ Returns currently active structure mode. """
-
-        current_mode = self.structure_data.attributes['structure-heat-cool-mode']
-        if current_mode == "float":
-            return "Off"
-        else:
-            return current_mode.capitalize()
-
-    @property
-    def options(self) -> list:
-        """ Return list of all the available structure modes. """
-
-        return STRUCTURE_MODES
-
-    async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
-
-        if option == 'Off':
-            attributes = self.set_attributes('float')
-            await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
-            self.structure_data.attributes['structure-heat-cool-mode'] = 'float'
-            self.async_write_ha_state()
-            await self.coordinator.async_request_refresh()
-        else:
-            lowercase_option = option[0].lower() + option[1:]
-            attributes = self.set_attributes(str(lowercase_option))
-            await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
-            self.structure_data.attributes['structure-heat-cool-mode'] = lowercase_option
-            self.async_write_ha_state()
-            await self.coordinator.async_request_refresh()
-
-    @staticmethod
-    def set_attributes(mode: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
-
-        attributes = {
-            "structure-heat-cool-mode": mode
-        }
-        return attributes
-
-
 class SystemMode(CoordinatorEntity, SelectEntity):
-    """ Representation of System Mode. """
+    """Representation of System Mode."""
 
     def __init__(self, coordinator, structure_id):
         super().__init__(coordinator)
         self.structure_id = structure_id
 
-
     @property
     def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
+        """Handle coordinator structure data."""
 
         return self.coordinator.data.structures[self.structure_id]
 
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.structure_data.id)},
@@ -196,43 +99,43 @@ class SystemMode(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.structure_data.id) + '_system_mode'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "System mode"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         return 'mdi:home-circle'
 
     @property
     def current_option(self) -> str:
-        """ Returns currently active system mode. """
+        """Returns currently active system mode."""
 
         current_mode = self.structure_data.attributes['mode']
         return current_mode.capitalize()
 
     @property
     def options(self) -> list:
-        """ Return list of all the available system modes. """
+        """Return list of all the available system modes."""
 
         return SYSTEM_MODES
 
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         lowercase_option = option[0].lower() + option[1:]
         attributes = self.set_attributes(str(lowercase_option))
@@ -243,30 +146,30 @@ class SystemMode(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(mode: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         attributes = {
             "mode": mode
         }
         return attributes
 
+
 class HomeAwayMode(CoordinatorEntity, SelectEntity):
-    """ Representation of Home/Away Mode. """
+    """Representation of Home/Away Mode."""
 
     def __init__(self, coordinator, structure_id):
         super().__init__(coordinator)
         self.structure_id = structure_id
 
-
     @property
     def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
+        """Handle coordinator structure data."""
 
         return self.coordinator.data.structures[self.structure_id]
 
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.structure_data.id)},
@@ -278,25 +181,25 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.structure_data.id) + '_home_away_mode'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
-        return "Home/Away mode"
+        return "Home/Away"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         if self.structure_data.attributes['home']:
             return 'mdi:location-enter'
@@ -305,7 +208,7 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
 
     @property
     def current_option(self) -> str:
-        """ Returns currently active home/away mode. """
+        """Returns currently active home/away mode."""
 
         currently_home = self.structure_data.attributes['home']
         if currently_home:
@@ -317,12 +220,32 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
 
     @property
     def options(self) -> list:
-        """ Return list of all the available home/away modes. """
+        """Return list of all the available home/away modes."""
 
         return HOME_AWAY_MODE
 
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disable entity if system mode is set to manual on initial registration."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
+
+    @property
+    def available(self) -> bool:
+        """Marks entity as unavailable if system mode is set to Manual."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
+
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         attributes = self.set_attributes(option)
         await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
@@ -332,7 +255,7 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(mode: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         if mode == 'Home':
             setting = True
@@ -344,23 +267,23 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
         }
         return attributes
 
+
 class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
-    """ Representation of what sets Home/Away Mode. """
+    """Representation of what sets Home/Away Mode."""
 
     def __init__(self, coordinator, structure_id):
         super().__init__(coordinator)
         self.structure_id = structure_id
 
-
     @property
     def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
+        """Handle coordinator structure data."""
 
         return self.coordinator.data.structures[self.structure_id]
 
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.structure_data.id)},
@@ -372,33 +295,34 @@ class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.structure_data.id) + '_home_away_set_by'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "Home/Away mode set by"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def entity_category(self) -> EntityCategory:
-        """ Set category to config. """
+        """Set category to config."""
 
         return EntityCategory.CONFIG
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         mode = self.structure_data.attributes['home-away-mode']
+
         if mode == 'Manual':
             return 'mdi:account-circle'
         if mode == 'Third Party Home Away':
@@ -408,9 +332,10 @@ class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
 
     @property
     def current_option(self) -> str:
-        """ Returns currently active home/away mode setter. """
+        """Returns currently active home/away mode setter."""
 
         current = self.structure_data.attributes['home-away-mode']
+
         if current in HOME_AWAY_SET_BY.keys():
             return HOME_AWAY_SET_BY.get(current)
         else:
@@ -418,15 +343,35 @@ class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
 
     @property
     def options(self) -> list:
-        """ Return list of all the available home/away setters. """
+        """Return list of all the available home/away setters."""
 
         if self.structure_data.thermostats:
             return list(HOME_AWAY_SET_BY.values())
         else:
             return ['Manual', 'Flair App Geolocation']
 
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disable entity if system mode is set to manual on initial registration."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
+
+    @property
+    def available(self) -> bool:
+        """Marks entity as unavailable if system mode is set to Manual."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
+
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         ha_to_flair = HOME_AWAY_SET_BY_TO_FLAIR.get(option)
         attributes = self.set_attributes(ha_to_flair)
@@ -437,30 +382,30 @@ class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(setter: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         attributes = {
             "home-away-mode": setter
         }
         return attributes
 
+
 class DefaultHoldDuration(CoordinatorEntity, SelectEntity):
-    """ Representation of default hold duration setting. """
+    """Representation of default hold duration setting."""
 
     def __init__(self, coordinator, structure_id):
         super().__init__(coordinator)
         self.structure_id = structure_id
 
-
     @property
     def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
+        """Handle coordinator structure data."""
 
         return self.coordinator.data.structures[self.structure_id]
 
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.structure_data.id)},
@@ -472,40 +417,40 @@ class DefaultHoldDuration(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.structure_data.id) + '_default_hold_duration'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "Default hold duration"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def entity_category(self) -> EntityCategory:
-        """ Set category to config. """
+        """Set category to config."""
 
         return EntityCategory.CONFIG
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         return 'mdi:timer'
 
-
     @property
     def current_option(self) -> str:
-        """ Returns currently active default hold duration. """
+        """Returns currently active default hold duration."""
 
         current = self.structure_data.attributes['default-hold-duration']
+
         if current in DEFAULT_HOLD_DURATION.keys():
             return DEFAULT_HOLD_DURATION.get(current)
         else:
@@ -513,13 +458,32 @@ class DefaultHoldDuration(CoordinatorEntity, SelectEntity):
 
     @property
     def options(self) -> list:
-        """ Return list of all the available default hold durations. """
+        """Return list of all the available default hold durations."""
 
         return list(DEFAULT_HOLD_DURATION.values())
 
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disable entity if system mode is set to manual on initial registration."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
+
+    @property
+    def available(self) -> bool:
+        """Marks entity as unavailable if system mode is set to Manual."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
 
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         ha_to_flair = DEFAULT_HOLD_TO_FLAIR.get(option)
         attributes = self.set_attributes(ha_to_flair)
@@ -530,30 +494,30 @@ class DefaultHoldDuration(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(duration: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         attributes = {
             "default-hold-duration": duration
         }
         return attributes
 
+
 class SetPointController(CoordinatorEntity, SelectEntity):
-    """ Representation of set point controller setting. """
+    """Representation of set point controller setting."""
 
     def __init__(self, coordinator, structure_id):
         super().__init__(coordinator)
         self.structure_id = structure_id
 
-
     @property
     def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
+        """Handle coordinator structure data."""
 
         return self.coordinator.data.structures[self.structure_id]
 
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.structure_data.id)},
@@ -565,40 +529,40 @@ class SetPointController(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.structure_data.id) + '_set_point_controller'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "Set point controller"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def entity_category(self) -> EntityCategory:
-        """ Set category to config. """
+        """Set category to config."""
 
         return EntityCategory.CONFIG
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         return 'mdi:controller'
 
-
     @property
     def current_option(self) -> str:
-        """ Returns current set point controller. """
+        """Returns current set point controller."""
 
         current = self.structure_data.attributes['set-point-mode']
+
         if current in SET_POINT_CONTROLLER.keys():
             return SET_POINT_CONTROLLER.get(current)
         else:
@@ -606,16 +570,35 @@ class SetPointController(CoordinatorEntity, SelectEntity):
 
     @property
     def options(self) -> list:
-        """ Return list of all the available set point controllers. """
+        """Return list of all the available set point controllers."""
 
         if self.structure_data.thermostats:
             return list(SET_POINT_CONTROLLER.values())
         else:
             return ['Flair App']
 
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disable entity if system mode is set to manual on initial registration."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
+
+    @property
+    def available(self) -> bool:
+        """Marks entity as unavailable if system mode is set to Manual."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
 
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         ha_to_flair = SET_POINT_CONTROLLER_TO_FLAIR.get(option)
         attributes = self.set_attributes(ha_to_flair)
@@ -626,7 +609,7 @@ class SetPointController(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(option: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         attributes = {
             "set-point-mode": option
@@ -635,22 +618,21 @@ class SetPointController(CoordinatorEntity, SelectEntity):
 
 
 class Schedule(CoordinatorEntity, SelectEntity):
-    """ Representation of available structure schedules. """
+    """Representation of available structure schedules."""
 
     def __init__(self, coordinator, structure_id):
         super().__init__(coordinator)
         self.structure_id = structure_id
 
-
     @property
     def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
+        """Handle coordinator structure data."""
 
         return self.coordinator.data.structures[self.structure_id]
 
     @property
     def schedules(self) -> dict[str,str]:
-        """ Create dictionary with all available schedules. """
+        """Create dictionary with all available schedules."""
 
         schedules: dict[str, str] = {
             "No Schedule": "No Schedule",
@@ -662,10 +644,9 @@ class Schedule(CoordinatorEntity, SelectEntity):
 
         return schedules
 
-
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.structure_data.id)},
@@ -677,34 +658,34 @@ class Schedule(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.structure_data.id) + '_schedule'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "Active schedule"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         return 'mdi:calendar'
 
-
     @property
     def current_option(self) -> str:
-        """ Returns current active schedule. """
+        """Returns current active schedule."""
 
         active_schedule = self.structure_data.attributes['active-schedule-id']
+
         if active_schedule is None:
             return 'No Schedule'
         else:
@@ -712,13 +693,32 @@ class Schedule(CoordinatorEntity, SelectEntity):
 
     @property
     def options(self) -> list:
-        """ Return list of all the available schedules. """
+        """Return list of all the available schedules."""
 
         return list(self.schedules.values())
 
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disable entity if system mode is set to manual on initial registration."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
+
+    @property
+    def available(self) -> bool:
+        """Marks entity as unavailable if system mode is set to Manual."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
 
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         SCHEDULE_NAME_TO_ID = {v: k for (k, v) in self.schedules.items()}
 
@@ -726,6 +726,7 @@ class Schedule(CoordinatorEntity, SelectEntity):
             ha_to_flair = None
         else:
             ha_to_flair = SCHEDULE_NAME_TO_ID.get(option)
+
         attributes = self.set_attributes(ha_to_flair)
         await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
         self.structure_data.attributes['active-schedule-id'] = ha_to_flair
@@ -734,7 +735,7 @@ class Schedule(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(option: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         attributes = {
             "active-schedule-id": option
@@ -743,22 +744,21 @@ class Schedule(CoordinatorEntity, SelectEntity):
 
 
 class AwayMode(CoordinatorEntity, SelectEntity):
-    """ Representation of structure away mode setting. """
+    """Representation of structure away mode setting."""
 
     def __init__(self, coordinator, structure_id):
         super().__init__(coordinator)
         self.structure_id = structure_id
 
-
     @property
     def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
+        """Handle coordinator structure data."""
 
         return self.coordinator.data.structures[self.structure_id]
 
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.structure_data.id)},
@@ -770,51 +770,68 @@ class AwayMode(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.structure_data.id) + '_away_mode'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "Away Mode"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def entity_category(self) -> EntityCategory:
-        """ Set category to config. """
+        """Set category to config."""
 
         return EntityCategory.CONFIG
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         return 'mdi:clipboard-list'
 
-
     @property
     def current_option(self) -> str:
-        """ Returns current away mode setting. """
+        """Returns current away mode setting."""
 
         return self.structure_data.attributes['structure-away-mode']
 
-
     @property
     def options(self) -> list:
-        """ Return list of all the available away modes. """
+        """Return list of all the available away modes."""
 
         return AWAY_MODES
 
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disable entity if system mode is set to manual on initial registration."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
+
+    @property
+    def available(self) -> bool:
+        """Marks entity as unavailable if system mode is set to Manual."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
 
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         attributes = self.set_attributes(option)
         await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
@@ -824,7 +841,7 @@ class AwayMode(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(option: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         attributes = {
             "structure-away-mode": option
@@ -833,23 +850,28 @@ class AwayMode(CoordinatorEntity, SelectEntity):
 
 
 class RoomActivity(CoordinatorEntity, SelectEntity):
-    """ Representation of Flair room activity setting. """
+    """Representation of Flair room activity setting."""
 
     def __init__(self, coordinator, structure_id, room_id):
         super().__init__(coordinator)
         self.room_id = room_id
         self.structure_id = structure_id
 
-
     @property
     def room_data(self) -> Room:
-        """ Handle coordinator room data. """
+        """Handle coordinator room data."""
 
         return self.coordinator.data.structures[self.structure_id].rooms[self.room_id]
 
     @property
+    def structure_data(self) -> Structure:
+        """Handle coordinator structure data."""
+
+        return self.coordinator.data.structures[self.structure_id]
+
+    @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.room_data.id)},
@@ -861,37 +883,37 @@ class RoomActivity(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.room_data.id) + '_activity_status'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "Activity status"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         if self.room_data.attributes['active']:
             return 'mdi:toggle-switch'
         else:
             return 'mdi:toggle-switch-off'
 
-
     @property
     def current_option(self) -> str:
-        """ Returns current activity status. """
+        """Returns current activity status."""
 
         active = self.room_data.attributes['active']
+
         if active:
             return 'Active'
         else:
@@ -899,18 +921,38 @@ class RoomActivity(CoordinatorEntity, SelectEntity):
 
     @property
     def options(self) -> list:
-        """ Return list of all the available activity status states. """
+        """Return list of all the available activity status states."""
 
         return ROOM_MODES
 
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disable entity if system mode is set to manual on initial registration."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
+
+    @property
+    def available(self) -> bool:
+        """Marks entity as unavailable if system mode is set to Manual."""
+
+        system_mode = self.structure_data.attributes['mode']
+        if system_mode == 'manual':
+            return False
+        else:
+            return True
 
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         if option == 'Active':
             ha_to_flair = True
         else:
             ha_to_flair = False
+
         attributes = self.set_attributes(ha_to_flair)
         await self.coordinator.client.update('rooms', self.room_data.id, attributes=attributes, relationships={})
         self.room_data.attributes['active'] = ha_to_flair
@@ -919,7 +961,7 @@ class RoomActivity(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(option: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         attributes = {
             "active": option
@@ -928,23 +970,22 @@ class RoomActivity(CoordinatorEntity, SelectEntity):
 
 
 class PuckBackground(CoordinatorEntity, SelectEntity):
-    """ Representation of puck background color. """
+    """Representation of puck background color."""
 
     def __init__(self, coordinator, structure_id, puck_id):
         super().__init__(coordinator)
         self.puck_id = puck_id
         self.structure_id = structure_id
 
-
     @property
     def puck_data(self) -> Puck:
-        """ Handle coordinator puck data. """
+        """Handle coordinator puck data."""
 
         return self.coordinator.data.structures[self.structure_id].pucks[self.puck_id]
 
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.puck_data.id)},
@@ -956,50 +997,49 @@ class PuckBackground(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.puck_data.id) + '_background_color'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "Background color"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def entity_category(self) -> EntityCategory:
-        """ Set category to config. """
+        """Set category to config."""
 
         return EntityCategory.CONFIG
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         return 'mdi:invert-colors'
 
-
     @property
     def current_option(self) -> str:
-        """ Returns current puck background color. """
+        """Returns current puck background color."""
 
         return self.puck_data.attributes['puck-display-color'].capitalize()
 
     @property
     def options(self) -> list:
-        """ Return list of all the available puck background colors. """
+        """Return list of all the available puck background colors."""
 
         return PUCK_BACKGROUND
 
     @property
     def available(self) -> str:
-        """ Return true if puck is active. """
+        """Return true if puck is active."""
 
         if self.puck_data.attributes['inactive'] == False:
             return True
@@ -1007,7 +1047,7 @@ class PuckBackground(CoordinatorEntity, SelectEntity):
             return False
 
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         ha_to_flair = option.lower()
         attributes = self.set_attributes(ha_to_flair)
@@ -1018,7 +1058,7 @@ class PuckBackground(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(option: str) -> dict[str, Any]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         attributes = {
             "puck-display-color": option
@@ -1027,29 +1067,28 @@ class PuckBackground(CoordinatorEntity, SelectEntity):
 
 
 class PuckTempScale(CoordinatorEntity, SelectEntity):
-    """ Representation of puck temp scale selection. """
+    """Representation of puck temp scale selection."""
 
     def __init__(self, coordinator, structure_id, puck_id):
         super().__init__(coordinator)
         self.puck_id = puck_id
         self.structure_id = structure_id
 
-
     @property
     def puck_data(self) -> Puck:
-        """ Handle coordinator puck data. """
+        """Handle coordinator puck data."""
 
         return self.coordinator.data.structures[self.structure_id].pucks[self.puck_id]
 
     @property
     def structure_data(self) -> Structure:
-        """ Handle coordinator structure data. """
+        """Handle coordinator structure data."""
 
         return self.coordinator.data.structures[self.structure_id]
 
     @property
     def device_info(self) -> dict[str, Any]:
-        """ Return device registry information for this entity. """
+        """Return device registry information for this entity."""
 
         return {
             "identifiers": {(DOMAIN, self.puck_data.id)},
@@ -1061,33 +1100,34 @@ class PuckTempScale(CoordinatorEntity, SelectEntity):
 
     @property
     def unique_id(self) -> str:
-        """ Sets unique ID for this entity. """
+        """Sets unique ID for this entity."""
 
         return str(self.puck_data.id) + '_temp_scale'
 
     @property
     def name(self) -> str:
-        """ Return name of the entity. """
+        """Return name of the entity."""
 
         return "Temperature scale"
 
     @property
     def has_entity_name(self) -> bool:
-        """ Indicate that entity has name defined. """
+        """Indicate that entity has name defined."""
 
         return True
 
     @property
     def entity_category(self) -> EntityCategory:
-        """ Set category to config. """
+        """Set category to config."""
 
         return EntityCategory.CONFIG
 
     @property
     def icon(self) -> str:
-        """ Set icon. """
+        """Set icon."""
 
         temp_scale = self.structure_data.attributes['temperature-scale']
+
         if temp_scale == 'F':
             return 'mdi:temperature-fahrenheit'
         if temp_scale == 'C':
@@ -1095,23 +1135,21 @@ class PuckTempScale(CoordinatorEntity, SelectEntity):
         if temp_scale == 'K':
             return 'mdi:temperature-kelvin'
 
-
     @property
     def current_option(self) -> str:
-        """ Returns current puck temp scale. """
+        """Returns current puck temp scale."""
 
         current_scale = self.structure_data.attributes['temperature-scale']
         return TEMPERATURE_SCALES.get(current_scale)
 
     @property
     def options(self) -> list:
-        """ Return list of all the available temperature scales. """
+        """Return list of all the available temperature scales."""
 
         return list(TEMPERATURE_SCALES.values())
 
-
     async def async_select_option(self, option: str) -> None:
-        """ Change the selected option. """
+        """Change the selected option."""
 
         ha_to_flair = TEMP_SCALE_TO_FLAIR.get(option)
         attributes = self.set_attributes(ha_to_flair)
@@ -1122,7 +1160,7 @@ class PuckTempScale(CoordinatorEntity, SelectEntity):
 
     @staticmethod
     def set_attributes(option: str) -> dict[str, str]:
-        """ Creates attributes dictionary. """
+        """Creates attributes dictionary."""
 
         attributes = {
             "temperature-scale": option
