@@ -1,4 +1,4 @@
-""" Constants for Flair """
+"""Constants for Flair"""
 
 import asyncio
 import logging
@@ -17,7 +17,9 @@ from homeassistant.components.climate.const import (
 )
 from homeassistant.const import Platform
 
+
 LOGGER = logging.getLogger(__package__)
+
 
 DEFAULT_SCAN_INTERVAL = 30
 DOMAIN = "flair"
@@ -41,7 +43,7 @@ FLAIR_ERRORS = (
     FlairError,
 )
 
-""" Dictionaries and lists. """
+# Dictionaries and lists.
 
 AWAY_MODES = [
     "Smart Away",
@@ -132,13 +134,6 @@ SET_POINT_CONTROLLER = {
     "Home Evenness For Active Rooms Follow Third Party": "Thermostat",
     "Home Evenness For Active Rooms Flair Setpoint": "Flair App",
 }
-
-STRUCTURE_MODES = [
-    "Heat",
-    "Cool",
-    "Auto",
-    "Off",
-]
 
 SYSTEM_MODES = [
     "Auto",
