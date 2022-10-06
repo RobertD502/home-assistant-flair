@@ -155,7 +155,7 @@ class TempAwayMin(CoordinatorEntity, NumberEntity):
         """Return maximum allowed min away temp in celsius.
 
         Always has to be 3 degrees celsius less than the
-        maxium away temp setting.
+        maximum away temp setting.
         """
 
         away_max = self.structure_data.attributes['temp-away-max-c'] - 3
@@ -518,10 +518,10 @@ class PuckLowerLimit(CoordinatorEntity, NumberEntity):
             return 1.0
 
     @property
-    def available(self) -> str:
+    def available(self) -> bool:
         """Return true if puck is active."""
 
-        if self.puck_data.attributes['inactive'] == False:
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
@@ -676,10 +676,10 @@ class PuckUpperLimit(CoordinatorEntity, NumberEntity):
             return 1.0
 
     @property
-    def available(self) -> str:
+    def available(self) -> bool:
         """Return true if puck is active."""
 
-        if self.puck_data.attributes['inactive'] == False:
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
@@ -837,7 +837,7 @@ class TempCalibration(CoordinatorEntity, NumberEntity):
             return 1.0
 
     @property
-    def available(self) -> str:
+    def available(self) -> bool:
         """Return true if puck is active and offset exists."""
 
         puck_inactive = self.puck_data.attributes['inactive']
