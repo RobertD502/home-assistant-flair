@@ -191,7 +191,7 @@ class HomeAwayRevert(CoordinatorEntity, ButtonEntity):
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
-    def set_attributes(self) -> dict[str, Any]:
+    def set_attributes(self) -> tuple[dict[str, bool], dict[str, None]]:
         """Creates attributes dictionary."""
 
         is_home = self.structure_data.attributes['home']
