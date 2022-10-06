@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from flairaio.model import Puck, Structure
+from flairaio.model import HVACUnit, Puck, Structure
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, LOGGER
 from .coordinator import FlairDataUpdateCoordinator
 
 
@@ -120,7 +120,7 @@ class LockIR(CoordinatorEntity, SwitchEntity):
 
         attributes = {"hvac-unit-group-lock": True}
         await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
-        self.structure_data.attributes['hvac-unit-group-lock'] == True
+        self.structure_data.attributes['hvac-unit-group-lock'] = True
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
@@ -129,7 +129,7 @@ class LockIR(CoordinatorEntity, SwitchEntity):
 
         attributes = {"hvac-unit-group-lock": False}
         await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
-        self.structure_data.attributes['hvac-unit-group-lock'] == False
+        self.structure_data.attributes['hvac-unit-group-lock'] = False
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
@@ -196,7 +196,7 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
         return self.puck_data.attributes['locked']
 
     @property
-    def available(self) -> str:
+    def available(self) -> bool:
         """Determine if puck is available.
 
         Return true if puck is active and puck lock setting
@@ -216,7 +216,7 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
 
         attributes = {"locked": True}
         await self.coordinator.client.update('pucks', self.puck_data.id, attributes=attributes, relationships={})
-        self.puck_data.attributes['locked'] == True
+        self.puck_data.attributes['locked'] = True
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
@@ -225,7 +225,7 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
 
         attributes = {"locked": False}
         await self.coordinator.client.update('pucks', self.puck_data.id, attributes=attributes, relationships={})
-        self.puck_data.attributes['locked'] == False
+        self.puck_data.attributes['locked'] = False
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
@@ -306,7 +306,7 @@ class HVACPower(CoordinatorEntity, SwitchEntity):
         return self.hvac_data.attributes['power'] == 'On'
 
     @property
-    def available(self) -> str:
+    def available(self) -> bool:
         """Determine if puck is active.
 
         Return true if puck is active and
@@ -325,7 +325,7 @@ class HVACPower(CoordinatorEntity, SwitchEntity):
 
         attributes = {"power": "On"}
         await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
-        self.hvac_data.attributes['power'] == 'On'
+        self.hvac_data.attributes['power'] = 'On'
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
@@ -334,6 +334,6 @@ class HVACPower(CoordinatorEntity, SwitchEntity):
 
         attributes = {"power": "Off"}
         await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
-        self.hvac_data.attributes['power'] == 'Off'
+        self.hvac_data.attributes['power'] = 'Off'
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
