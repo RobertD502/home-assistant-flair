@@ -192,7 +192,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
         return hvac_mode
 
     @property
-    def hvac_modes(self) -> list:
+    def hvac_modes(self) -> list[HVACMode]:
         """Return supported modes."""
 
         supported_modes = [HVACMode.OFF, HVACMode.COOL, HVACMode.HEAT, HVACMode.HEAT_COOL]
@@ -224,7 +224,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
         else:
             return True
 
-    async def async_set_temperature(self, **kwargs):
+    async def async_set_temperature(self, **kwargs) -> None:
         """Set new target temperature."""
 
         current_controller = self.structure_data.attributes['set-point-mode']
@@ -242,7 +242,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
             self.async_write_ha_state()
             await self.coordinator.async_request_refresh()
 
-    async def async_set_hvac_mode(self, hvac_mode):
+    async def async_set_hvac_mode(self, hvac_mode) -> None:
         """Set new target hvac mode."""
 
         flair_mode = ROOM_HVAC_MAP_TO_FLAIR.get(hvac_mode)
@@ -343,7 +343,7 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
         return hvac_mode
 
     @property
-    def hvac_modes(self) -> list:
+    def hvac_modes(self) -> list[HVACMode]:
         """Return supported modes."""
 
         supported_modes = [HVACMode.OFF, HVACMode.COOL, HVACMode.HEAT, HVACMode.HEAT_COOL]
@@ -395,7 +395,7 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
         else:
             return False
 
-    async def async_set_temperature(self, **kwargs):
+    async def async_set_temperature(self, **kwargs) -> None:
         """Set new target temperature."""
 
         temp = kwargs.get(ATTR_TEMPERATURE)
@@ -409,7 +409,7 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
         else:
             LOGGER.error(f'Missing valid arguments for set_temperature in {kwargs}')
 
-    async def async_set_hvac_mode(self, hvac_mode):
+    async def async_set_hvac_mode(self, hvac_mode) -> None:
         """Set new target hvac mode."""
 
         flair_mode = ROOM_HVAC_MAP_TO_FLAIR.get(hvac_mode)
@@ -528,7 +528,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             return False
 
     @property
-    def available_hvac_modes(self) -> list:
+    def available_hvac_modes(self) -> list[str]:
         """Return what modes are available for HVAC unit."""
 
         hvac_modes = []
@@ -537,7 +537,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         return hvac_modes
 
     @property
-    def available_fan_speeds(self) -> list:
+    def available_fan_speeds(self) -> list[str]:
         """Returns available fan speeds based on current hvac mode."""
 
         mode = self.hvac_data.attributes['mode'].upper()
@@ -577,7 +577,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             return HVAC_CURRENT_MODE_MAP[mode]
 
     @property
-    def hvac_modes(self) -> list:
+    def hvac_modes(self) -> list[str]:
         """Return the Supported Modes. 
 
         Can't change modes when structure mode is manual & off
@@ -618,7 +618,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             return HVACAction.OFF
 
     @property
-    def fan_mode(self) -> str:
+    def fan_mode(self) -> str | None:
         """Return current fan speed."""
 
         fan_speed = self.hvac_data.attributes['fan-speed']
@@ -631,7 +631,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             return None
 
     @property
-    def fan_modes(self) -> list:
+    def fan_modes(self) -> list[str]:
         """Return supported fan speeds."""
 
         supported_fan_speeds = []
@@ -643,7 +643,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         return supported_fan_speeds
 
     @property
-    def swing_mode(self) -> str:
+    def swing_mode(self) -> str | None:
         """Return current swing mode."""
 
         if 'swing' in self.hvac_data.attributes:
@@ -656,7 +656,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             return None
 
     @property
-    def swing_modes(self) -> list:
+    def swing_modes(self) -> list[str]:
         """Return supported swing modes."""
 
         swing_modes = [SWING_ON, SWING_OFF]
@@ -747,12 +747,12 @@ class HVAC(CoordinatorEntity, ClimateEntity):
     def available(self) -> bool:
         """Return true if associated puck is available."""
 
-        if self.puck_data.attributes['inactive'] == False:
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
 
-    async def async_set_temperature(self, **kwargs):
+    async def async_set_temperature(self, **kwargs) -> None:
         """Set new target temperature."""
 
         temp = kwargs.get(ATTR_TEMPERATURE)
@@ -794,7 +794,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
                 self.async_write_ha_state()
                 await self.coordinator.async_request_refresh()
 
-    async def async_set_hvac_mode(self, hvac_mode):
+    async def async_set_hvac_mode(self, hvac_mode) -> None:
         """Set new target hvac mode. 
 
         Setting the targert temperature can only be done
@@ -811,7 +811,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
-    async def async_set_fan_mode(self, fan_mode):
+    async def async_set_fan_mode(self, fan_mode) -> None:
         """Set new target fan mode."""
 
         if self.structure_mode == "auto":
@@ -839,7 +839,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
                 self.async_write_ha_state()
                 await self.coordinator.async_request_refresh()
 
-    async def async_set_swing_mode(self, swing_mode):
+    async def async_set_swing_mode(self, swing_mode) -> None:
         """Set new target swing operation."""
 
         if self.structure_mode == "auto":
