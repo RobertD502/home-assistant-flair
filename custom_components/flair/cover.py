@@ -34,13 +34,13 @@ async def async_setup_entry(
             if structure_data.vents:
                 for vent_id, vent_data in structure_data.vents.items():
                     covers.extend((
-                        Vent(coordinator, structure_id, vent_id),
+                        FlairVent(coordinator, structure_id, vent_id),
                     ))
 
     async_add_entities(covers)
 
 
-class Vent(CoordinatorEntity, CoverEntity):
+class FlairVent(CoordinatorEntity, CoverEntity):
     """Representation of Vent device."""
 
     def __init__(self, coordinator, structure_id, vent_id):
@@ -144,7 +144,7 @@ class Vent(CoordinatorEntity, CoverEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.vent_data.attributes['inactive'] == False:
+        if not self.vent_data.attributes['inactive']:
             return True
         else:
             return False
