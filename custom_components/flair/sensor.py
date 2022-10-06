@@ -232,7 +232,7 @@ class PuckTemp(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.puck_data.attributes['inactive'] == False:
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
@@ -310,7 +310,7 @@ class PuckHumidity(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.puck_data.attributes['inactive'] == False:
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
@@ -368,7 +368,7 @@ class PuckLight(CoordinatorEntity, SensorEntity):
         for 200 lux per Volt.
         """
 
-        return ((self.puck_data.current_reading['light'] / 100) * 200)
+        return (self.puck_data.current_reading['light'] / 100) * 200
 
     @property
     def native_unit_of_measurement(self) -> str:
@@ -477,7 +477,7 @@ class PuckVoltage(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.puck_data.attributes['inactive'] == False:
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
@@ -561,7 +561,7 @@ class PuckRSSI(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.puck_data.attributes['inactive'] == False:
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
@@ -639,7 +639,7 @@ class PuckPressure(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.puck_data.attributes['inactive'] == False:
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
@@ -717,7 +717,7 @@ class DuctTemp(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.vent_data.attributes['inactive'] == False:
+        if not self.vent_data.attributes['inactive']:
             return True
         else:
             return False
@@ -795,7 +795,7 @@ class DuctPressure(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.vent_data.attributes['inactive'] == False:
+        if not self.vent_data.attributes['inactive']:
             return True
         else:
             return False
@@ -880,7 +880,7 @@ class VentVoltage(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.vent_data.attributes['inactive'] == False:
+        if not self.vent_data.attributes['inactive']:
             return True
         else:
             return False
@@ -964,7 +964,7 @@ class VentRSSI(CoordinatorEntity, SensorEntity):
     def available(self) -> bool:
         """Return true if device is available."""
 
-        if self.vent_data.attributes['inactive'] == False:
+        if not self.vent_data.attributes['inactive']:
             return True
         else:
             return False
