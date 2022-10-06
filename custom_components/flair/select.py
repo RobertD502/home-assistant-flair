@@ -207,7 +207,7 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
             return 'mdi:location-exit'
 
     @property
-    def current_option(self) -> str:
+    def current_option(self) -> str | None:
         """Returns currently active home/away mode."""
 
         currently_home = self.structure_data.attributes['home']
@@ -331,7 +331,7 @@ class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
             return 'mdi:cellphone'
 
     @property
-    def current_option(self) -> str:
+    def current_option(self) -> str | None:
         """Returns currently active home/away mode setter."""
 
         current = self.structure_data.attributes['home-away-mode']
@@ -446,7 +446,7 @@ class DefaultHoldDuration(CoordinatorEntity, SelectEntity):
         return 'mdi:timer'
 
     @property
-    def current_option(self) -> str:
+    def current_option(self) -> str | None:
         """Returns currently active default hold duration."""
 
         current = self.structure_data.attributes['default-hold-duration']
@@ -558,7 +558,7 @@ class SetPointController(CoordinatorEntity, SelectEntity):
         return 'mdi:controller'
 
     @property
-    def current_option(self) -> str:
+    def current_option(self) -> str | None:
         """Returns current set point controller."""
 
         current = self.structure_data.attributes['set-point-mode']
@@ -720,12 +720,12 @@ class Schedule(CoordinatorEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         """Change the selected option."""
 
-        SCHEDULE_NAME_TO_ID = {v: k for (k, v) in self.schedules.items()}
+        schedule_name_to_id = {v: k for (k, v) in self.schedules.items()}
 
         if option == 'No Schedule':
             ha_to_flair = None
         else:
-            ha_to_flair = SCHEDULE_NAME_TO_ID.get(option)
+            ha_to_flair = schedule_name_to_id.get(option)
 
         attributes = self.set_attributes(ha_to_flair)
         await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
@@ -960,7 +960,7 @@ class RoomActivity(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(option: str) -> dict[str, Any]:
+    def set_attributes(option: bool) -> dict[str, Any]:
         """Creates attributes dictionary."""
 
         attributes = {
@@ -1038,10 +1038,10 @@ class PuckBackground(CoordinatorEntity, SelectEntity):
         return PUCK_BACKGROUND
 
     @property
-    def available(self) -> str:
+    def available(self) -> bool:
         """Return true if puck is active."""
 
-        if self.puck_data.attributes['inactive'] == False:
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
