@@ -129,7 +129,7 @@ class SystemMode(CoordinatorEntity, SelectEntity):
         return current_mode.capitalize()
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available system modes."""
 
         return SYSTEM_MODES
@@ -145,7 +145,7 @@ class SystemMode(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(mode: str) -> dict[str, Any]:
+    def set_attributes(mode: str) -> dict[str, str]:
         """Creates attributes dictionary."""
 
         attributes = {
@@ -219,7 +219,7 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
             return None
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available home/away modes."""
 
         return HOME_AWAY_MODE
@@ -254,7 +254,7 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(mode: str) -> dict[str, Any]:
+    def set_attributes(mode: str) -> dict[str, bool]:
         """Creates attributes dictionary."""
 
         if mode == 'Home':
@@ -342,7 +342,7 @@ class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
             return None
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available home/away setters."""
 
         if self.structure_data.thermostats:
@@ -381,7 +381,7 @@ class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(setter: str) -> dict[str, Any]:
+    def set_attributes(setter: str) -> dict[str, str]:
         """Creates attributes dictionary."""
 
         attributes = {
@@ -457,7 +457,7 @@ class DefaultHoldDuration(CoordinatorEntity, SelectEntity):
             return None
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available default hold durations."""
 
         return list(DEFAULT_HOLD_DURATION.values())
@@ -493,7 +493,7 @@ class DefaultHoldDuration(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(duration: str) -> dict[str, Any]:
+    def set_attributes(duration: str) -> dict[str, str]:
         """Creates attributes dictionary."""
 
         attributes = {
@@ -569,7 +569,7 @@ class SetPointController(CoordinatorEntity, SelectEntity):
             return None
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available set point controllers."""
 
         if self.structure_data.thermostats:
@@ -608,7 +608,7 @@ class SetPointController(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(option: str) -> dict[str, Any]:
+    def set_attributes(option: str) -> dict[str, str]:
         """Creates attributes dictionary."""
 
         attributes = {
@@ -692,7 +692,7 @@ class Schedule(CoordinatorEntity, SelectEntity):
             return self.schedules[active_schedule]
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available schedules."""
 
         return list(self.schedules.values())
@@ -734,7 +734,7 @@ class Schedule(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(option: str) -> dict[str, Any]:
+    def set_attributes(option: str) -> dict[str, str]:
         """Creates attributes dictionary."""
 
         attributes = {
@@ -805,7 +805,7 @@ class AwayMode(CoordinatorEntity, SelectEntity):
         return self.structure_data.attributes['structure-away-mode']
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available away modes."""
 
         return AWAY_MODES
@@ -840,7 +840,7 @@ class AwayMode(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(option: str) -> dict[str, Any]:
+    def set_attributes(option: str) -> dict[str, str]:
         """Creates attributes dictionary."""
 
         attributes = {
@@ -920,7 +920,7 @@ class RoomActivity(CoordinatorEntity, SelectEntity):
             return 'Inactive'
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available activity status states."""
 
         return ROOM_MODES
@@ -960,7 +960,7 @@ class RoomActivity(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(option: bool) -> dict[str, Any]:
+    def set_attributes(option: bool) -> dict[str, bool]:
         """Creates attributes dictionary."""
 
         attributes = {
@@ -1032,7 +1032,7 @@ class PuckBackground(CoordinatorEntity, SelectEntity):
         return self.puck_data.attributes['puck-display-color'].capitalize()
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available puck background colors."""
 
         return PUCK_BACKGROUND
@@ -1057,7 +1057,7 @@ class PuckBackground(CoordinatorEntity, SelectEntity):
         await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(option: str) -> dict[str, Any]:
+    def set_attributes(option: str) -> dict[str, str]:
         """Creates attributes dictionary."""
 
         attributes = {
@@ -1143,7 +1143,7 @@ class PuckTempScale(CoordinatorEntity, SelectEntity):
         return TEMPERATURE_SCALES.get(current_scale)
 
     @property
-    def options(self) -> list:
+    def options(self) -> list[str]:
         """Return list of all the available temperature scales."""
 
         return list(TEMPERATURE_SCALES.values())
