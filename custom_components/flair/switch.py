@@ -115,7 +115,7 @@ class LockIR(CoordinatorEntity, SwitchEntity):
 
         return self.structure_data.attributes['hvac-unit-group-lock']
 
-    async def async_turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs) -> None:
         """Lock the IR devices."""
 
         attributes = {"hvac-unit-group-lock": True}
@@ -124,7 +124,7 @@ class LockIR(CoordinatorEntity, SwitchEntity):
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs) -> None:
         """Unlock the IR devices."""
 
         attributes = {"hvac-unit-group-lock": False}
@@ -211,7 +211,7 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
         else:
             return False
 
-    async def async_turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs) -> None:
         """Lock the puck."""
 
         attributes = {"locked": True}
@@ -220,7 +220,7 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs) -> None:
         """Unlock the puck."""
 
         attributes = {"locked": False}
@@ -320,7 +320,7 @@ class HVACPower(CoordinatorEntity, SwitchEntity):
         else:
             return False
 
-    async def async_turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs) -> None:
         """Turn on HVAC unit."""
 
         attributes = {"power": "On"}
@@ -329,7 +329,7 @@ class HVACPower(CoordinatorEntity, SwitchEntity):
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
-    async def async_turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs) -> None:
         """Turn off HVAC unit."""
 
         attributes = {"power": "Off"}
