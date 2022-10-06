@@ -149,7 +149,7 @@ class FlairVent(CoordinatorEntity, CoverEntity):
         else:
             return False
 
-    async def async_open_cover_tilt(self, **kwargs):
+    async def async_open_cover_tilt(self, **kwargs) -> None:
         """Open the vent."""
 
         attributes = self.set_attributes(100)
@@ -165,7 +165,7 @@ class FlairVent(CoordinatorEntity, CoverEntity):
                             '''
                           )
 
-    async def async_close_cover_tilt(self, **kwargs):
+    async def async_close_cover_tilt(self, **kwargs) -> None:
         """Close the vent."""
 
         attributes = self.set_attributes(0)
@@ -181,12 +181,13 @@ class FlairVent(CoordinatorEntity, CoverEntity):
                             '''
                           )
 
-    async def async_set_cover_tilt_position(self, **kwargs):
+    async def async_set_cover_tilt_position(self, **kwargs) -> None:
         """Set vent percentage open."""
 
-        if kwargs[ATTR_TILT_POSITION] == 0:
+        tilt_position = kwargs.get(ATTR_TILT_POSITION)
+        if tilt_position == 0:
             await self.async_close_cover_tilt()
-        elif kwargs[ATTR_TILT_POSITION] == 100:
+        elif tilt_position == 100:
             await self.async_open_cover_tilt()
         else:
             attributes = self.set_attributes(50)
