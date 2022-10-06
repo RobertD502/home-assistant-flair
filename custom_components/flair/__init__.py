@@ -1,10 +1,8 @@
 """Flair Component."""
 from __future__ import annotations
 
-from flairaio.exceptions import FlairAuthError
-
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_CLIENT_ID, CONF_CLIENT_SECRET
+from homeassistant.const import CONF_CLIENT_ID
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, LOGGER, PLATFORMS
@@ -45,9 +43,9 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         LOGGER.info("Migrating Flair config entry to version 2.1")
         # Prior to release 0.1.3, unique_id was not set when a user migrated
         # from OAuth1.0 to 2.0 via reauthentication. In this case, if not present,
-        # unique_id needs to be set and entry version set to latest version.
+        # unique_id needs to be set and entry version set to the latest version.
         if not entry.unique_id:
-            entry.unique_id = entry.data['client_id']
+            entry.unique_id = entry.data[CONF_CLIENT_ID]
         entry.version = 2.1
 
     return True
