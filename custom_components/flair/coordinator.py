@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from aiohttp.client_exceptions import ContentTypeError
 from flairaio import FlairClient
 from flairaio.exceptions import FlairAuthError, FlairError
 from flairaio.model import FlairData
