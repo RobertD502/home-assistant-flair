@@ -1,6 +1,5 @@
 {
   "config": {
-    "title": "Flair",
     "step": {
       "user": {
         "title": "Fill in your Flair OAuth 2.0 credentials",
