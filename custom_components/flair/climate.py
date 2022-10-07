@@ -183,10 +183,11 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
             return 1.0
 
     @property
-    def hvac_mode(self) -> HVACMode:
+    def hvac_mode(self) -> HVACMode | None:
         """Return the current hvac_mode."""
 
         mode = self.structure_data.attributes['structure-heat-cool-mode']
+        hvac_mode = None
         if mode in ROOM_HVAC_MAP:
             hvac_mode = ROOM_HVAC_MAP[mode]
         return hvac_mode
@@ -334,10 +335,11 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
         return TEMP_CELSIUS
 
     @property
-    def hvac_mode(self) -> HVACMode:
+    def hvac_mode(self) -> HVACMode | None:
         """Return the current hvac_mode."""
 
         mode = self.structure_data.attributes['structure-heat-cool-mode']
+        hvac_mode = None
         if mode in ROOM_HVAC_MAP:
             hvac_mode = ROOM_HVAC_MAP[mode]
         return hvac_mode
@@ -864,6 +866,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
     def set_attributes(setting: str, value: Any, auto_mode: bool) -> dict[str, Any]:
         """Create attributes dictionary for client update method."""
 
+        attributes: dict[str, Any] = {}
         if auto_mode:
             if setting == 'temp':
                 attributes = {
