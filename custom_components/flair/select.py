@@ -257,6 +257,7 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
     def set_attributes(mode: str) -> dict[str, bool]:
         """Creates attributes dictionary."""
 
+        setting: bool = True
         if mode == 'Home':
             setting = True
         if mode == 'Away':
