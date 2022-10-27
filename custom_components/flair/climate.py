@@ -21,13 +21,13 @@ from homeassistant.components.climate.const import (
 )
 from homeassistant.const import (
     ATTR_TEMPERATURE,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
+    UnitOfTemperature,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util.unit_system import METRIC_SYSTEM
 
 from .const import (
     DOMAIN,
@@ -131,13 +131,13 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
         return True
 
     @property
-    def temperature_unit(self) -> str:
+    def temperature_unit(self) -> UnitOfTemperature:
         """Return celsius or fahrenheit."""
 
-        if self.hass.config.units.is_metric:
-            return TEMP_CELSIUS
+        if self.hass.config.units is METRIC_SYSTEM:
+            return UnitOfTemperature.CELSIUS
         else:
-            return TEMP_FAHRENHEIT
+            return UnitOfTemperature.FAHRENHEIT
 
     @property
     def target_temperature(self) -> float:
@@ -150,7 +150,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
 
         value = self.structure_data.attributes['set-point-temperature-c']
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return value
         else:
             return round(((value * (9/5)) + 32), 0)
@@ -159,7 +159,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
     def target_temperature_low(self) -> float:
         """Return minimum allowed set point in celsius or fahrenheit."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 10.0
         else:
             return 50.0
@@ -168,7 +168,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
     def target_temperature_high(self) -> float:
         """Return maximum allowed set point in celsius or fahrenheit."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 32.23
         else:
             return 90.0
@@ -177,7 +177,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
     def target_temperature_step(self) -> float:
         """Return temp stepping by 0.5 celsius or 1 fahrenheit."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 0.5
         else:
             return 1.0
@@ -232,7 +232,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
         if current_controller == "Home Evenness For Active Rooms Follow Third Party":
             LOGGER.error(f'Target temperature for Structure {self.structure_data.attributes["name"]} can only be set when the "Set point controller" is Flair app')
         else:
-            if self.hass.config.units.is_metric:
+            if self.hass.config.units is METRIC_SYSTEM:
                 temp = kwargs.get(ATTR_TEMPERATURE)
             else:
                 temp = round(((kwargs.get(ATTR_TEMPERATURE) - 32) * (5/9)), 2)
@@ -329,10 +329,10 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
         return 'mdi:door-open'
 
     @property
-    def temperature_unit(self) -> str:
+    def temperature_unit(self) -> UnitOfTemperature:
         """Return the unit of measurement."""
 
-        return TEMP_CELSIUS
+        return UnitOfTemperature.CELSIUS
 
     @property
     def hvac_mode(self) -> HVACMode | None:
@@ -512,13 +512,13 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         return 'mdi:hvac'
 
     @property
-    def temperature_unit(self) -> str:
+    def temperature_unit(self) -> UnitOfTemperature:
         """Return temp scale unit of measurement."""
 
         if self.hvac_data.attributes['constraints']['temperature-scale'] == 'F':
-            return TEMP_FAHRENHEIT
+            return UnitOfTemperature.FAHRENHEIT
         else:
-            return TEMP_CELSIUS
+            return UnitOfTemperature.CELSIUS
 
     @property
     def is_on(self) -> bool:
@@ -670,7 +670,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
 
         temp = self.room_data.attributes['current-temperature-c']
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return temp
         else:
             return round(((temp * (9/5)) + 32), 1)
@@ -765,7 +765,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             type_id = self.room_data.id
             type = 'rooms'
 
-            if not self.hass.config.units.is_metric:
+            if not self.hass.config.units is METRIC_SYSTEM:
                 # Since we are setting the room temp when in auto structure mode, which is always in celsius,
                 # we need to convert the temp to celsius if HA is not in celsius. However, the target temp is read
                 # from the HVAC unit - the temp scale key from the HVAC constraints, used to set the temperature_unit
