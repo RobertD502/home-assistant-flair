@@ -15,7 +15,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import TEMP_CELSIUS, TEMP_FAHRENHEIT
+from homeassistant.const import UnitOfTemperature
+from homeassistant.util.unit_system import METRIC_SYSTEM
 
 from .const import DOMAIN
 from .coordinator import FlairDataUpdateCoordinator
@@ -115,19 +116,19 @@ class TempAwayMin(CoordinatorEntity, NumberEntity):
 
         value = self.structure_data.attributes['temp-away-min-c']
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return value
         else:
             return round(((value * (9/5)) + 32), 0)
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfTemperature:
         """Return celsius or fahrenheit."""
 
-        if self.hass.config.units.is_metric:
-            return TEMP_CELSIUS
+        if self.hass.config.units is METRIC_SYSTEM:
+            return UnitOfTemperature.CELSIUS
         else:
-            return TEMP_FAHRENHEIT
+            return UnitOfTemperature.FAHRENHEIT
 
     @property
     def device_class(self) -> NumberDeviceClass:
@@ -145,7 +146,7 @@ class TempAwayMin(CoordinatorEntity, NumberEntity):
     def native_min_value(self) -> float:
         """Return minimum allowed set point in celsius."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 10.0
         else:
             return 50.0
@@ -160,7 +161,7 @@ class TempAwayMin(CoordinatorEntity, NumberEntity):
 
         away_max = self.structure_data.attributes['temp-away-max-c'] - 3
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return away_max
         else:
             return round(((away_max * (9/5)) + 32), 0)
@@ -200,7 +201,7 @@ class TempAwayMin(CoordinatorEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             temp = value
         else:
             temp = round(((value - 32) * (5/9)), 2)
@@ -287,19 +288,19 @@ class TempAwayMax(CoordinatorEntity, NumberEntity):
 
         value = self.structure_data.attributes['temp-away-max-c']
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return value
         else:
             return round(((value * (9/5)) + 32), 0)
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfTemperature:
         """Return celsius or fahrenheit."""
 
-        if self.hass.config.units.is_metric:
-            return TEMP_CELSIUS
+        if self.hass.config.units is METRIC_SYSTEM:
+            return UnitOfTemperature.CELSIUS
         else:
-            return TEMP_FAHRENHEIT
+            return UnitOfTemperature.FAHRENHEIT
 
     @property
     def device_class(self) -> NumberDeviceClass:
@@ -323,7 +324,7 @@ class TempAwayMax(CoordinatorEntity, NumberEntity):
 
         away_min = self.structure_data.attributes['temp-away-min-c'] + 3
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return away_min
         else:
             return round(((away_min * (9/5)) + 32), 0)
@@ -332,7 +333,7 @@ class TempAwayMax(CoordinatorEntity, NumberEntity):
     def native_max_value(self) -> float:
         """Return maximum allowed max away temp in celsius or fahrenheit."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 32.2
         else:
             return 90.0
@@ -372,7 +373,7 @@ class TempAwayMax(CoordinatorEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             temp = value
         else:
             temp = round(((value - 32) * (5/9)), 2)
@@ -459,19 +460,19 @@ class PuckLowerLimit(CoordinatorEntity, NumberEntity):
 
         value = self.puck_data.attributes['setpoint-bound-low']
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return value
         else:
             return round(((value * (9/5)) + 32), 0)
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfTemperature:
         """Return celsius or fahrenheit."""
 
-        if self.hass.config.units.is_metric:
-            return TEMP_CELSIUS
+        if self.hass.config.units is METRIC_SYSTEM:
+            return UnitOfTemperature.CELSIUS
         else:
-            return TEMP_FAHRENHEIT
+            return UnitOfTemperature.FAHRENHEIT
 
     @property
     def device_class(self) -> NumberDeviceClass:
@@ -489,7 +490,7 @@ class PuckLowerLimit(CoordinatorEntity, NumberEntity):
     def native_min_value(self) -> float:
         """Return minimum allowed lower limit."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 10.0
         else:
             return 50.0
@@ -503,7 +504,7 @@ class PuckLowerLimit(CoordinatorEntity, NumberEntity):
 
         upper_limit = self.puck_data.attributes['setpoint-bound-high']
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return upper_limit
         else:
             return round(((upper_limit * (9/5)) + 32), 0)
@@ -512,7 +513,7 @@ class PuckLowerLimit(CoordinatorEntity, NumberEntity):
     def native_step(self) -> float:
         """Return temp stepping by 0.5 celsius or 1 fahrenheit."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 0.5
         else:
             return 1.0
@@ -529,7 +530,7 @@ class PuckLowerLimit(CoordinatorEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             temp = value
         else:
             temp = round(((value - 32) * (5/9)), 2)
@@ -617,19 +618,19 @@ class PuckUpperLimit(CoordinatorEntity, NumberEntity):
 
         value = self.puck_data.attributes['setpoint-bound-high']
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return value
         else:
             return round(((value * (9/5)) + 32), 0)
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfTemperature:
         """Return celsius or fahrenheit."""
 
-        if self.hass.config.units.is_metric:
-            return TEMP_CELSIUS
+        if self.hass.config.units is METRIC_SYSTEM:
+            return UnitOfTemperature.CELSIUS
         else:
-            return TEMP_FAHRENHEIT
+            return UnitOfTemperature.FAHRENHEIT
 
     @property
     def device_class(self) -> NumberDeviceClass:
@@ -652,7 +653,7 @@ class PuckUpperLimit(CoordinatorEntity, NumberEntity):
 
         lower_limit = self.puck_data.attributes['setpoint-bound-low']
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return lower_limit
         else:
             return round(((lower_limit * (9/5)) + 32), 0)
@@ -661,7 +662,7 @@ class PuckUpperLimit(CoordinatorEntity, NumberEntity):
     def native_max_value(self) -> float:
         """Return maximum allowed upper limit."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 32.23
         else:
             return 90.0
@@ -670,7 +671,7 @@ class PuckUpperLimit(CoordinatorEntity, NumberEntity):
     def native_step(self) -> float:
         """Return temp stepping by 0.5 celsius or 1 fahrenheit."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 0.5
         else:
             return 1.0
@@ -687,7 +688,7 @@ class PuckUpperLimit(CoordinatorEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             temp = value
         else:
             temp = round(((value - 32) * (5/9)), 2)
@@ -775,19 +776,19 @@ class TempCalibration(CoordinatorEntity, NumberEntity):
 
         temp_c = self.puck_data.attributes['temperature-offset-override-c'] + 5.0
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return temp_c
         else:
             return round((temp_c * (9/5)), 0)
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfTemperature:
         """Return celsius or fahrenheit depending on HA settings."""
 
-        if self.hass.config.units.is_metric:
-            return TEMP_CELSIUS
+        if self.hass.config.units is METRIC_SYSTEM:
+            return UnitOfTemperature.CELSIUS
         else:
-            return TEMP_FAHRENHEIT
+            return UnitOfTemperature.FAHRENHEIT
 
     @property
     def device_class(self) -> NumberDeviceClass:
@@ -809,7 +810,7 @@ class TempCalibration(CoordinatorEntity, NumberEntity):
         to -18F.
         """
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return -10.0
         else:
             return -18.0
@@ -822,7 +823,7 @@ class TempCalibration(CoordinatorEntity, NumberEntity):
         be equal to 9F.
         """
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 5.0
         else:
             return 9.0
@@ -831,7 +832,7 @@ class TempCalibration(CoordinatorEntity, NumberEntity):
     def native_step(self) -> float:
         """Return temp stepping by 0.5C or 1F."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             return 0.5
         else:
             return 1.0
@@ -851,7 +852,7 @@ class TempCalibration(CoordinatorEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Update the current value."""
 
-        if self.hass.config.units.is_metric:
+        if self.hass.config.units is METRIC_SYSTEM:
             # Need to subtract 5 celsius to get value
             # Flair servers expect.
             ha_to_flair = value - 5.0
