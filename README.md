@@ -1,5 +1,5 @@
 # Flair Home Assistant Integration
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs) ![GitHub manifest version (path)](https://img.shields.io/github/manifest-json/v/RobertD502/home-assistant-flair?filename=custom_components%2Fflair%2Fmanifest.json)
+[![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg)](https://github.com/hacs/integration) ![GitHub manifest version (path)](https://img.shields.io/github/manifest-json/v/RobertD502/home-assistant-flair?filename=custom_components%2Fflair%2Fmanifest.json)
 
 <a href="https://www.buymeacoffee.com/RobertD502" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="100" width="424"></a>
 
@@ -20,10 +20,15 @@ If you don't already have these, please [contact Flair Support](https://support.
 # Installation
 
 ## With HACS
-1. Within HACS, add this repository (https://github.com/RobertD502/home-assistant-flair)
-as a Custom Repository (use **Integration** as the category).
-2. The `Flair` page should automatically load (or find it in the HACS Store)
-3. Click `Install`
+
+Click on the button below to automatically navigate to the repository within HACS:
+
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=RobertD502&repository=home-assistant-flair&category=integration)
+
+Alternatively, follow the steps below:
+
+1. Click on the `Explore & Download Repositories` button and search for Flair.
+2. On the Flair page, click on the `Download` button.
 
 ## Manual
 Copy the `flair` directory, from `custom_components` in this repository,
@@ -32,14 +37,17 @@ and place it inside your Home Assistant Core installation's `custom_components` 
 `Note`: If installing manually, in order to be alerted about new releases, you will need to subscribe to releases from this repository. 
 
 ## Setup
+
+Click on the button below to add the integration:
+
+[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=flair)
+
+Alternatively, follow the steps below:
+
 1. Install this integration.
 2. Navigate to the Home Assistant Integrations page (Settings --> Devices & Services)
 3. Click the `+ ADD INTEGRATION` button in the lower right-hand corner
 4. Search for `Flair`
-
-Alternatively, click on the button below to add the integration:
-
-[![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=flair)
 
 # Devices
 
