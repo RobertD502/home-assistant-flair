@@ -16,9 +16,9 @@ from homeassistant.const import(
     ELECTRIC_POTENTIAL_VOLT,
     LIGHT_LUX,
     PERCENTAGE,
-    PRESSURE_KPA,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
-    TEMP_CELSIUS,
+    UnitOfPressure,
+    UnitOfTemperature,
 
 )
 from homeassistant.core import HomeAssistant
@@ -211,10 +211,10 @@ class PuckTemp(CoordinatorEntity, SensorEntity):
         return self.puck_data.attributes['current-temperature-c']
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfTemperature:
         """Return Celsius as the native unit."""
 
-        return TEMP_CELSIUS
+        return UnitOfTemperature.CELSIUS
 
     @property
     def device_class(self) -> SensorDeviceClass:
@@ -618,10 +618,10 @@ class PuckPressure(CoordinatorEntity, SensorEntity):
         return round(self.puck_data.current_reading['room-pressure'], 2)
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfPressure:
         """Return kPa as the native unit."""
 
-        return PRESSURE_KPA
+        return UnitOfPressure.KPA
 
     @property
     def device_class(self) -> SensorDeviceClass:
@@ -696,10 +696,10 @@ class DuctTemp(CoordinatorEntity, SensorEntity):
         return self.vent_data.current_reading['duct-temperature-c']
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfTemperature:
         """Return Celsius as the native unit."""
 
-        return TEMP_CELSIUS
+        return UnitOfTemperature.CELSIUS
 
     @property
     def device_class(self) -> SensorDeviceClass:
@@ -774,10 +774,10 @@ class DuctPressure(CoordinatorEntity, SensorEntity):
         return round(self.vent_data.current_reading['duct-pressure'], 2)
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfPressure:
         """Return kPa as the native unit."""
 
-        return PRESSURE_KPA
+        return UnitOfPressure.KPA
 
     @property
     def device_class(self) -> SensorDeviceClass:
