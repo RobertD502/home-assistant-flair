@@ -120,6 +120,7 @@ Each Vent has the following entities:
 | `Vent` | `Cover` | Has a state of either `open` or `closed`. If your vent is either `50` or `100` percent open, the state will be `open`. If your vent is `0` percent open, the state will be `closed`. You can manually open the vent halfway (50 percent) by either changing the tilt position to `50` via the UI or by using the service `cover.set_cover_tilt_position` and setting `tilt position` to `50`. Note: Although you can move the slider to any value between 0-100, any tilt position other than `0` or `100` will be interpreted as `50` - this is a Flair vent limitation as it doesn't support any other position aside from 0, 50, or 100. |
 | `Duct Pressure` | `Sensor` | |
 | `Duct Temperature` | `Sensor` | |
+| `Reported state` | `Sensor` | This entity is disabled by default. Value corresponds to the percent open of the vent as last reported by the sensor on the vent itself. Can be used in automations to determine if puck failed to open/close a vent by comparing if the state of this sensor is equal to the position of the related vent cover entity (for example checking 5 minutes after the current position of the vent cover entity changed). |
 | `RSSI` | `Sensor` | |
 | `Voltage` | `Sensor` | Displays the current voltage of the vent. If using batteries to power your vent, this can be used to monitor battery health. |
 
