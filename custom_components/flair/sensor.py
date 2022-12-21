@@ -63,7 +63,8 @@ async def async_setup_entry(
                         DuctTemp(coordinator, structure_id, vent_id),
                         DuctPressure(coordinator, structure_id, vent_id),
                         VentVoltage(coordinator, structure_id, vent_id),
-                        VentRSSI(coordinator, structure_id, vent_id)
+                        VentRSSI(coordinator, structure_id, vent_id),
+                        VentReportedState(coordinator, structure_id, vent_id)
                     ))
             # Rooms
             if structure_data.rooms:
@@ -959,6 +960,84 @@ class VentRSSI(CoordinatorEntity, SensorEntity):
         """Set category to diagnostic."""
 
         return EntityCategory.DIAGNOSTIC
+
+    @property
+    def available(self) -> bool:
+        """Return true if device is available."""
+
+        if not self.vent_data.attributes['inactive']:
+            return True
+        else:
+            return False
+
+
+class VentReportedState(CoordinatorEntity, SensorEntity):
+    """Representation of Vent RSSI."""
+
+    def __init__(self, coordinator, structure_id, vent_id):
+        super().__init__(coordinator)
+        self.vent_id = vent_id
+        self.structure_id = structure_id
+
+    @property
+    def vent_data(self) -> Vent:
+        """Handle coordinator vent data."""
+
+        return self.coordinator.data.structures[self.structure_id].vents[self.vent_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device registry information for this entity."""
+
+        return {
+            "identifiers": {(DOMAIN, self.vent_data.id)},
+            "name": self.vent_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Vent",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """Sets unique ID for this entity."""
+
+        return str(self.vent_data.id) + '_reported_state'
+
+    @property
+    def name(self) -> str:
+        """Return name of the entity."""
+
+        return "Reported state"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """Indicate that entity has name defined."""
+
+        return True
+
+    @property
+    def native_value(self) -> int:
+        """Return the most recent percent open reading as returned by sensors on vent."""
+
+        return self.vent_data.current_reading['percent-open']
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """Return % as the native unit."""
+
+        return PERCENTAGE
+
+    @property
+    def entity_category(self) -> EntityCategory:
+        """Set category to diagnostic."""
+
+        return EntityCategory.DIAGNOSTIC
+
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Disable entity on initial registration."""
+
+        return False
 
     @property
     def available(self) -> bool:
