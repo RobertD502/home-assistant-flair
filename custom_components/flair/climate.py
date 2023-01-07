@@ -670,7 +670,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
 
         temp = self.room_data.attributes['current-temperature-c']
 
-        if self.hass.config.units is METRIC_SYSTEM:
+        if self.temperature_unit is UnitOfTemperature.CELSIUS:
             return temp
         else:
             return round(((temp * (9/5)) + 32), 1)
