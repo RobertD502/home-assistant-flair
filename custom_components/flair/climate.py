@@ -765,9 +765,9 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             type_id = self.room_data.id
             type = 'rooms'
 
-            if not self.hass.config.units is METRIC_SYSTEM:
+            if not self.temperature_unit is UnitOfTemperature.CELSIUS:
                 # Since we are setting the room temp when in auto structure mode, which is always in celsius,
-                # we need to convert the temp to celsius if HA is not in celsius. However, the target temp is read
+                # we need to convert the temp to celsius if HVAC unit is not celsius. However, the target temp is read
                 # from the HVAC unit - the temp scale key from the HVAC constraints, used to set the temperature_unit
                 # property, eliminates us from having to do this conversion when setting the HVAC 'temperature' attribute.
                 converted = ((temp - 32) * (5/9))
