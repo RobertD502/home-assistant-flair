@@ -73,16 +73,16 @@ async def async_setup_entry(
             # HVAC Units
             if structure_data.hvac_units:
                 for hvac_id, hvac_data in structure_data.hvac_units.items():
-                    try:
-                        structure_data.hvac_units[hvac_id].attributes['constraints']['temperature-scale']
-                    except KeyError:
+                    constraints = structure_data.hvac_units[hvac_id].attributes['constraints']
+                    codesets = structure_data.hvac_units[hvac_id].attributes['codesets'][0]
+                    if 'temperature-scale' not in constraints and 'temperature-scale' not in codesets:
                         unit_name = structure_data.hvac_units[hvac_id].attributes['name']
                         LOGGER.error(f'''Flair HVAC Unit {unit_name} does not have a temperature scale.
                                      Contact Flair customer support to get this fixed.''')
-                        continue
-                    climates.extend((
-                        HVAC(coordinator, structure_id, hvac_id),
-                    ))
+                    else:
+                        climates.extend((
+                            HVAC(coordinator, structure_id, hvac_id),
+                        ))
 
     async_add_entities(climates)
 
@@ -515,7 +515,12 @@ class HVAC(CoordinatorEntity, ClimateEntity):
     def temperature_unit(self) -> UnitOfTemperature:
         """Return temp scale unit of measurement."""
 
-        if self.hvac_data.attributes['constraints']['temperature-scale'] == 'F':
+        if 'temperature-scale' in self.hvac_data.attributes['constraints']:
+            scale = self.hvac_data.attributes['constraints']['temperature-scale']
+        else:
+            scale = self.hvac_data.attributes['codesets'][0]['temperature-scale']
+
+        if scale == 'F':
             return UnitOfTemperature.FAHRENHEIT
         else:
             return UnitOfTemperature.CELSIUS
