@@ -1,0 +1,30 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Flair účet je už nakonfigurovaný",
+            "reauth_successful": "Opätovné overenie bolo úspešné"
+        },
+        "error": {
+            "cannot_connect": "Nepodarilo sa pripojiť",
+            "invalid_auth": "Neplatné overenie. Sú vaše poverenia správne?",
+            "no_structures": "Nenašli sa žiadne štruktúry",
+            "no_user": "Na účte sa nenašiel žiadny používateľ"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "client_id": "OAuth 2.0 client_id",
+                    "client_secret": "OAuth 2.0 client_secret"
+                },
+                "title": "Vyplňte svoje poverenia Flair OAuth 2.0"
+            },
+            "reauth_confirm": {
+                "data": {
+                    "client_id": "OAuth 2.0 client_id",
+                    "client_secret": "OAuth 2.0 client_secret"
+                },
+                "title": "Znova sa overte pomocou poverení Flair OAuth 2.0"
+            }
+        }
+    }
+}
