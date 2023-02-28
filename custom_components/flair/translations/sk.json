@@ -8,7 +8,7 @@
             "cannot_connect": "Nepodarilo sa pripojiť",
             "invalid_auth": "Neplatné overenie. Sú vaše poverenia správne?",
             "no_structures": "Nenašli sa žiadne štruktúry",
-            "no_user": "No user found on account"
+            "no_user": "Na účte sa nenašiel žiadny používateľ"
         },
         "step": {
             "user": {
