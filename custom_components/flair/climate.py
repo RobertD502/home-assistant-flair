@@ -807,14 +807,17 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         Setting the targert temperature can only be done
         when structure state is manual and HVAC unit is on.
         """
-
         mode = HASS_HVAC_MODE_TO_FLAIR.get(hvac_mode)
-        attributes = self.set_attributes('hvac_mode', mode, False)
+        if hvac_mode == HVACMode.OFF:
+            attributes = self.set_attributes('power', mode, False)
+            self.hvac_data.attributes['power'] = mode
+        else:
+            attributes = self.set_attributes('hvac_mode', mode, False)
+            self.hvac_data.attributes['mode'] = mode
 
         if hvac_mode == HVACMode.DRY:
             await self.async_set_fan_mode(FAN_AUTO)
         await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
-        self.hvac_data.attributes['mode'] = mode
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
@@ -903,5 +906,8 @@ class HVAC(CoordinatorEntity, ClimateEntity):
                 attributes ={
                     "swing": value,
                 }
-
+                if setting == 'power':
+        attributes = {
+            "power": value
+        }
         return attributes
