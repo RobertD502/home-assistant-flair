@@ -906,8 +906,8 @@ class HVAC(CoordinatorEntity, ClimateEntity):
                 attributes ={
                     "swing": value,
                 }
-                if setting == 'power':
-        attributes = {
-            "power": value
-        }
+        if setting == 'power':
+            attributes = {
+                "power": value
+            }
         return attributes
