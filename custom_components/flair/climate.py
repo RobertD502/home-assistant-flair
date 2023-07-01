@@ -25,6 +25,7 @@ from homeassistant.const import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util.unit_system import METRIC_SYSTEM
@@ -560,6 +561,22 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             return fan_speeds
 
     @property
+    def fan_only_fan_speeds(self) -> list[str]:
+        """Returns available fan speeds when in fan only hvac mode."""
+
+        mode = "FAN"
+        fan_speeds = []
+
+        if "ON" in self.hvac_data.attributes['constraints']['ON'][mode].keys():
+            for key in self.hvac_data.attributes['constraints']['ON'][mode]['ON'].keys():
+                fan_speeds.append(key)
+            return fan_speeds
+        else:
+            for key in self.hvac_data.attributes['constraints']['ON'][mode]['OFF'].keys():
+                fan_speeds.append(key)
+            return fan_speeds
+
+    @property
     def swing_available(self) -> bool:
         """Determine if swing mode is available."""
 
@@ -580,26 +597,23 @@ class HVAC(CoordinatorEntity, ClimateEntity):
 
         mode = self.hvac_data.attributes['mode']
 
+        # Always revert to Off if a manual HVAC is powered off
+        if (not self.is_on) and (self.structure_mode == 'manual'):
+            return HVACMode.OFF
+
         if mode in HVAC_CURRENT_MODE_MAP:
             return HVAC_CURRENT_MODE_MAP[mode]
 
     @property
     def hvac_modes(self) -> list[str]:
-        """Return the Supported Modes. 
-
-        Can't change modes when structure mode is manual & off
-        or when in auto mode regardless of power state. So, we
-        need to only return the last mode it was in.
-        """
+        """Return the Supported Modes."""
 
         current_mode = self.hvac_data.attributes['mode']
 
-        if (self.structure_mode == 'manual') and (not self.is_on):
-            supported_modes = []
-            if current_mode in HVAC_CURRENT_MODE_MAP:
-                supported_modes.append(HVAC_CURRENT_MODE_MAP[current_mode])
-                return supported_modes
-        elif self.structure_mode =='auto':
+        # Can't change modes when structure mode is
+        # auto regardless of power state. So, we
+        # need to only return the last mode it was in.
+        if self.structure_mode =='auto':
             supported_modes = []
             if current_mode in HVAC_CURRENT_MODE_MAP:
                 supported_modes.append(HVAC_CURRENT_MODE_MAP[current_mode])
@@ -607,6 +621,9 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         else:
             modes = self.available_hvac_modes
             supported_modes = []
+            # Always make Off mode avaiilable for manually controlled units
+            if self.structure_mode == 'manual':
+                supported_modes.append(HVACMode.OFF)
             for mode in modes:
                 if mode in HVAC_AVAILABLE_MODES_MAP:
                     supported_modes.append(HVAC_AVAILABLE_MODES_MAP[mode])
@@ -790,7 +807,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
 
         if self.structure_mode == 'manual':
             if not self.is_on:
-                LOGGER.error(f'Temperature for {self.hvac_data.attributes["name"]} can only be set when it is powered on.')
+                raise HomeAssistantError(f'Temperature for {self.hvac_data.attributes["name"]} can only be set when it is powered on.')
             else:
                 auto_mode = False
                 type_id = self.hvac_data.id
@@ -802,19 +819,62 @@ class HVAC(CoordinatorEntity, ClimateEntity):
                 await self.coordinator.async_request_refresh()
 
     async def async_set_hvac_mode(self, hvac_mode) -> None:
-        """Set new target hvac mode. 
+        """Set new target hvac mode."""
 
-        Setting the targert temperature can only be done
-        when structure state is manual and HVAC unit is on.
-        """
+        # Power off manual HVAC unit
+        if hvac_mode == HVACMode.OFF:
+            power_attributes = {"power": "Off"}
+            await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=power_attributes, relationships={})
+            self.hvac_data.attributes['power'] = 'Off'
+        elif self.structure_mode == 'manual':
+            # Turn the HVAC unit on before sending desired mode
+            if not self.is_on:
+                power_attributes = {"power": "On"}
+                await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=power_attributes, relationships={})
+                self.hvac_data.attributes['power'] = 'On'
 
-        mode = HASS_HVAC_MODE_TO_FLAIR.get(hvac_mode)
-        attributes = self.set_attributes('hvac_mode', mode, False)
+            mode = HASS_HVAC_MODE_TO_FLAIR.get(hvac_mode)
 
-        if hvac_mode == HVACMode.DRY:
-            await self.async_set_fan_mode(FAN_AUTO)
-        await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
-        self.hvac_data.attributes['mode'] = mode
+            if hvac_mode == HVACMode.DRY:
+                # When switching from Fan Only mode to Dry Mode,
+                # the fan speed needs to be set to Auto along with Dry Mode.
+                # Otherwise, Flair API will complain that Auto mode isn't available in
+                # Fan Only mode.
+                # Note: There is currently a bug in the API where it takes multiple
+                # tries until the validation error doesn't get raised.
+                if self.hvac_mode == HVACMode.FAN_ONLY:
+                    flair_speed = HASS_HVAC_FAN_SPEED_TO_FLAIR.get(FAN_AUTO)
+                    attributes = self.set_attributes('hvac_mode-fan_speed', mode, False, flair_speed)
+                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
+                    self.hvac_data.attributes['mode'] = mode
+                    self.hvac_data.attributes['fan-speed'] = flair_speed
+                    self.async_write_ha_state()
+                    await self.coordinator.async_request_refresh()
+                    return None
+                else:
+                    await self.async_set_fan_mode(FAN_AUTO)
+            if hvac_mode == HVACMode.FAN_ONLY:
+                # If fan speed is Auto before switching to Fan Only mode,
+                # we have to set a valid fan speed since Auto isn't available
+                # in Fan Only mode.
+                # Note: There is currently a bug in the API where it takes multiple
+                # tries until the validation error doesn't get raised.
+                if self.fan_mode == FAN_AUTO:
+                    valid_fan_speed = HVAC_AVAILABLE_FAN_SPEEDS[self.fan_only_fan_speeds[0]]
+                    flair_speed = HASS_HVAC_FAN_SPEED_TO_FLAIR.get(valid_fan_speed)
+                    attributes = self.set_attributes('hvac_mode-fan_speed', mode, False, flair_speed)
+                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
+                    self.hvac_data.attributes['mode'] = mode
+                    self.hvac_data.attributes['fan-speed'] = flair_speed
+                    self.async_write_ha_state()
+                    await self.coordinator.async_request_refresh()
+                    return None
+            # For all other cases just send the hvac_mode
+            attributes = self.set_attributes('hvac_mode', mode, False)
+            await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
+            self.hvac_data.attributes['mode'] = mode
+        else:
+            return None
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()
 
@@ -868,7 +928,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             await self.coordinator.async_request_refresh()
 
     @staticmethod
-    def set_attributes(setting: str, value: Any, auto_mode: bool) -> dict[str, Any]:
+    def set_attributes(setting: str, value: Any, auto_mode: bool, extra_val: str = None) -> dict[str, Any]:
         """Create attributes dictionary for client update method."""
 
         attributes: dict[str, Any] = {}
@@ -902,6 +962,11 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             if setting == 'swing_mode':
                 attributes ={
                     "swing": value,
+                }
+            if setting == 'hvac_mode-fan_speed':
+                attributes = {
+                    "mode": value,
+                    "fan-speed": extra_val
                 }
 
         return attributes
