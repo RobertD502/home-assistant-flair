@@ -1,10 +1,10 @@
 name: "Release"
 
 on:
-  workflow_dispatch:
   release:
     types:
       - "published"
+      - "edited"
 
 permissions: {}
 
@@ -21,7 +21,7 @@ jobs:
       - name: "Adjust version number"
         shell: "bash"
         run: |
-          yq -i -o json '.version=0.1.8.2' \
+          yq -i -o json '.version="${{ github.event.release.tag_name }}"' \
             "${{ github.workspace }}/custom_components/flair/manifest.json"
 
       - name: "ZIP the integration directory"
