@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from flairaio.exceptions import FlairError
 from flairaio.model import HVACUnit, Puck, Room, Structure
 
 from homeassistant.components.climate import (
@@ -12,6 +13,7 @@ from homeassistant.components.climate import (
     HVACMode,
 )
 from homeassistant.components.climate.const import (
+    ATTR_HVAC_MODE,
     FAN_AUTO,
     FAN_HIGH,
     FAN_LOW,
@@ -778,6 +780,13 @@ class HVAC(CoordinatorEntity, ClimateEntity):
 
     async def async_set_temperature(self, **kwargs) -> None:
         """Set new target temperature."""
+
+        if ATTR_HVAC_MODE in kwargs:
+            hvac_mode = kwargs[ATTR_HVAC_MODE]
+            if hvac_mode in [HVACMode.OFF, HVACMode.FAN_ONLY, HVACMode.DRY]:
+                raise FlairError(f'{self.hvac_data.attributes["name"]}: Setting temperature is not supported for {hvac_mode} mode')
+            else:
+                await self.async_set_hvac_mode(hvac_mode)
 
         temp = kwargs.get(ATTR_TEMPERATURE)
 
