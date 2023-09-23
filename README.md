@@ -154,3 +154,8 @@ Each IR HVAC unit has the following entities:
 > If your structure is set to `Auto Mode`: you will only be able to control `Fan speed` and `Swing` (if available for your unit). In addition, mini split temperature set point is controlled by rooms if a Flair structure is set to `Auto Mode`. Changing the temperature of this climate entity will result in changing the room set point when in `Auto Mode`. You also cannot change the HVAC mode as this is controlled at the Structure level when in auto mode.
 > 
 > If your structure is set to `Manual Mode`: Setting the HVAC mode to `Off` will turn your HVAC unit off. In order to turn the unit on, set the HVAC mode to your desired HVAC mode (Heat, Cool, Fan Only, etc).
+
+### If your HVAC unit only has standalone buttons in the Flair app:
+
+For these HVAC units `button` entities are created depending on what control is available (Temp +, Temp -, Fan +, Fan -, etc).
+In addition, a `Last button pressed` `sensor` entity is created showing the last command sent to the HVAC unit by Flair. By default, if the Flair API doesn't return a value for the last button pressed, the sensor will have a state of `No button pressed`.
