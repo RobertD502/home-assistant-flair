@@ -44,6 +44,7 @@ class FlairDataUpdateCoordinator(DataUpdateCoordinator):
 
         try:
             data = await self.client.get_flair_data()
+            LOGGER.debug(f'Found the following Flair devices: {data}')
         except FlairAuthError as error:
             raise ConfigEntryAuthFailed(error) from error
         except FlairError as error:
