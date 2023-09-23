@@ -73,6 +73,13 @@ async def async_setup_entry(
                         HoldTempUntil(coordinator, structure_id, room_id),
                     ))
 
+            # HVAC Units with only button controls
+            if structure_data.hvac_units:
+                for hvac_id, hvac_data in structure_data.hvac_units.items():
+                    constraints = structure_data.hvac_units[hvac_id].attributes['constraints']
+                    if isinstance(constraints, list):
+                        sensors.append(LastButtonPressed(coordinator, structure_id, hvac_id))
+
     async_add_entities(sensors)
 
 
@@ -1137,6 +1144,89 @@ class HoldTempUntil(CoordinatorEntity, SensorEntity):
         """
 
         if self.room_data.attributes['hold-until']:
+            return True
+        else:
+            return False
+
+
+class LastButtonPressed(CoordinatorEntity, SensorEntity):
+    """Representation of last button pressed on HVAC unit with only button control."""
+
+    def __init__(self, coordinator, structure_id, hvac_id):
+        super().__init__(coordinator)
+        self.hvac_id = hvac_id
+        self.structure_id = structure_id
+
+    @property
+    def hvac_data(self) -> HVACUnit:
+        """Handle coordinator HVAC unit data."""
+
+        return self.coordinator.data.structures[self.structure_id].hvac_units[self.hvac_id]
+
+    @property
+    def structure_data(self) -> Structure:
+        """Handle coordinator structure data."""
+
+        return self.coordinator.data.structures[self.structure_id]
+
+    @property
+    def puck_data(self) -> Puck:
+        """Handle coordinator puck data."""
+
+        puck_id = self.hvac_data.relationships['puck']['data']['id']
+        return self.coordinator.data.structures[self.structure_id].pucks[puck_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device registry information for this entity."""
+
+        return {
+            "identifiers": {(DOMAIN, self.hvac_data.id)},
+            "name": self.hvac_data.attributes['name'],
+            "manufacturer": self.hvac_data.attributes['make-name'],
+            "model": "HVAC Unit",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """Sets unique ID for this entity."""
+
+        return str(self.hvac_data.id) + '_last_button_pressed'
+
+    @property
+    def name(self) -> str:
+        """Return name of the entity."""
+
+        return "Last button pressed"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """Indicate that entity has name defined."""
+
+        return True
+
+    @property
+    def icon(self) -> str:
+        """Set hvac icon."""
+
+        return 'mdi:hvac'
+
+    @property
+    def native_value(self) -> float:
+        """Return last button pressed."""
+
+        last_pressed = self.hvac_data.attributes['button-presses']
+        if last_pressed:
+            return last_pressed[0].capitalize()
+        else:
+            return "No button pressed"
+
+    @property
+    def available(self) -> bool:
+        """Return true if associated puck is available."""
+
+        if not self.puck_data.attributes['inactive']:
             return True
         else:
             return False
