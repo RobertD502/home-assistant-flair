@@ -76,16 +76,19 @@ async def async_setup_entry(
             # HVAC Units
             if structure_data.hvac_units:
                 for hvac_id, hvac_data in structure_data.hvac_units.items():
+                    # Only create climate entity for mini-split units
+                    # Units that only use buttons return a list of constraints while more advanced return a dict
                     constraints = structure_data.hvac_units[hvac_id].attributes['constraints']
-                    codesets = structure_data.hvac_units[hvac_id].attributes['codesets'][0]
-                    if 'temperature-scale' not in constraints and 'temperature-scale' not in codesets:
-                        unit_name = structure_data.hvac_units[hvac_id].attributes['name']
-                        LOGGER.error(f'''Flair HVAC Unit {unit_name} does not have a temperature scale.
-                                     Contact Flair customer support to get this fixed.''')
-                    else:
-                        climates.extend((
-                            HVAC(coordinator, structure_id, hvac_id),
-                        ))
+                    if isinstance(constraints, dict):
+                        codesets = structure_data.hvac_units[hvac_id].attributes['codesets'][0]
+                        if 'temperature-scale' not in constraints and 'temperature-scale' not in codesets:
+                            unit_name = structure_data.hvac_units[hvac_id].attributes['name']
+                            LOGGER.error(f'''Flair HVAC Unit {unit_name} does not have a temperature scale.
+                                        Contact Flair customer support to get this fixed.''')
+                        else:
+                            climates.extend((
+                                HVAC(coordinator, structure_id, hvac_id),
+                            ))
 
     async_add_entities(climates)
 
