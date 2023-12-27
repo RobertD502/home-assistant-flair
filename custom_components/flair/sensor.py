@@ -16,7 +16,7 @@ from homeassistant.const import(
     LIGHT_LUX,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
-    UnitOfElectricPotential
+    UnitOfElectricPotential,
     UnitOfPressure,
     UnitOfTemperature,
 
