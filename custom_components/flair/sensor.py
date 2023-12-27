@@ -13,10 +13,10 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import(
-    ELECTRIC_POTENTIAL_VOLT,
     LIGHT_LUX,
     PERCENTAGE,
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    UnitOfElectricPotential
     UnitOfPressure,
     UnitOfTemperature,
 
@@ -458,10 +458,10 @@ class PuckVoltage(CoordinatorEntity, SensorEntity):
         return self.puck_data.attributes['voltage']
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfElectricPotential:
         """Return volts as the native unit."""
 
-        return ELECTRIC_POTENTIAL_VOLT
+        return UnitOfElectricPotential.VOLT
 
     @property
     def device_class(self) -> SensorDeviceClass:
@@ -861,10 +861,10 @@ class VentVoltage(CoordinatorEntity, SensorEntity):
         return self.vent_data.attributes['voltage']
 
     @property
-    def native_unit_of_measurement(self) -> str:
+    def native_unit_of_measurement(self) -> UnitOfElectricPotential:
         """Return volts as the native unit."""
 
-        return ELECTRIC_POTENTIAL_VOLT
+        return UnitOfElectricPotential.VOLT
 
     @property
     def device_class(self) -> SensorDeviceClass:
