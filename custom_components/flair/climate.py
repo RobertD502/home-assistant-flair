@@ -96,6 +96,8 @@ async def async_setup_entry(
 class StructureClimate(CoordinatorEntity, ClimateEntity):
     """Representation of Structure Climate entity."""
 
+    _enable_turn_on_off_backwards_compatibility = False
+
     def __init__(self, coordinator, structure_id):
         super().__init__(coordinator)
         self.structure_id = structure_id
@@ -209,7 +211,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
     def supported_features(self) -> int:
         """Return supported features."""
 
-        return ClimateEntityFeature.TARGET_TEMPERATURE
+        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_OFF
 
     @property
     def entity_registry_enabled_default(self) -> bool:
@@ -230,6 +232,16 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
             return False
         else:
             return True
+
+    async def async_turn_off(self) -> None:
+        """Set structure mode to off."""
+        
+        attributes = self.set_attributes('float', 'hvac_mode')
+
+        await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
+        self.structure_data.attributes['structure-heat-cool-mode'] = 'float'
+        self.async_write_ha_state()
+        return await self.coordinator.async_request_refresh()        
 
     async def async_set_temperature(self, **kwargs) -> None:
         """Set new target temperature."""
@@ -280,6 +292,8 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
 
 class RoomTemp(CoordinatorEntity, ClimateEntity):
     """Representation of Flair Room Climate entity."""
+
+    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(self, coordinator, structure_id, room_id):
         super().__init__(coordinator)
@@ -379,7 +393,7 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
     def supported_features(self) -> int:
         """Return supported features."""
 
-        return ClimateEntityFeature.TARGET_TEMPERATURE
+        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_OFF
 
     @property
     def entity_registry_enabled_default(self) -> bool:
@@ -402,6 +416,16 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
             return True
         else:
             return False
+
+    async def async_turn_off(self) -> None:
+        """Set structure mode to off."""
+        
+        attributes = self.set_attributes('float', 'hvac_mode')
+
+        await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
+        self.structure_data.attributes['structure-heat-cool-mode'] = 'float'
+        self.async_write_ha_state()
+        return await self.coordinator.async_request_refresh()  
 
     async def async_set_temperature(self, **kwargs) -> None:
         """Set new target temperature."""
@@ -449,6 +473,8 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
 
 class HVAC(CoordinatorEntity, ClimateEntity):
     """Representation of Flair HVAC unit climate entity."""
+
+    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(self, coordinator, structure_id, hvac_id):
         super().__init__(coordinator)
@@ -732,11 +758,11 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             if self.structure_mode == 'manual':
                 if self.is_on:
                     if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
+                        return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
                     else:
-                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE
+                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
                 else:
-                    return ClimateEntityFeature.TARGET_TEMPERATURE
+                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_ON
 
         # If only swing is available.
         if self.swing_available:
@@ -749,11 +775,11 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             if self.structure_mode == 'manual':
                 if self.is_on:
                     if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.SWING_MODE
+                        return ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
                     else:
-                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE
+                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.SWING_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
                 else:
-                    return ClimateEntityFeature.TARGET_TEMPERATURE
+                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_ON
 
         # If only fan speeds are available.
         if self.available_fan_speeds:
@@ -766,11 +792,11 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             if self.structure_mode == 'manual':
                 if self.is_on:
                     if self.hvac_mode in (HVACMode.DRY, HVACMode.FAN_ONLY):
-                        return ClimateEntityFeature.FAN_MODE
+                        return ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
                     else:
-                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE
+                        return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TURN_ON | ClimateEntityFeature.TURN_OFF
                 else:
-                    return ClimateEntityFeature.TARGET_TEMPERATURE
+                    return ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TURN_ON
 
     @property
     def available(self) -> bool:
@@ -780,6 +806,25 @@ class HVAC(CoordinatorEntity, ClimateEntity):
             return True
         else:
             return False
+
+    async def async_turn_off(self) -> None:
+        """Turn IR HVAC unit off."""
+        
+        power_attributes = {"power": "Off"}
+        await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=power_attributes, relationships={})
+        self.hvac_data.attributes['power'] = 'Off'
+        self.async_write_ha_state()
+        return await self.coordinator.async_request_refresh()
+
+    async def async_turn_on(self) -> None:
+        """Turn IR HVAC unit on."""
+
+        mode = self.hvac_data.attributes['mode']
+        power_attributes = {"power": "On"}
+        await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=power_attributes, relationships={})
+        self.hvac_data.attributes['power'] = 'On'
+        self.async_write_ha_state()
+        return await self.coordinator.async_request_refresh()
 
     async def async_set_temperature(self, **kwargs) -> None:
         """Set new target temperature."""
@@ -847,41 +892,46 @@ class HVAC(CoordinatorEntity, ClimateEntity):
 
             mode = HASS_HVAC_MODE_TO_FLAIR.get(hvac_mode)
 
-            if hvac_mode == HVACMode.DRY:
-                # When switching from Fan Only mode to Dry Mode,
-                # the fan speed needs to be set to Auto along with Dry Mode.
-                # Otherwise, Flair API will complain that Auto mode isn't available in
-                # Fan Only mode.
-                # Note: There is currently a bug in the API where it takes multiple
-                # tries until the validation error doesn't get raised.
-                if self.hvac_mode == HVACMode.FAN_ONLY:
-                    flair_speed = HASS_HVAC_FAN_SPEED_TO_FLAIR.get(FAN_AUTO)
-                    attributes = self.set_attributes('hvac_mode-fan_speed', mode, False, flair_speed)
-                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
-                    self.hvac_data.attributes['mode'] = mode
+            if hvac_mode in [HVACMode.DRY, HVACMode.HEAT_COOL]:
+                # When switching to Dry or Heat_Cool (Auto) mode,
+                # a fan speed of Auto is expected
+
+                mode_attributes = self.set_attributes('hvac_mode', mode, False)
+                flair_speed = HASS_HVAC_FAN_SPEED_TO_FLAIR.get(FAN_AUTO)
+                if self.hvac_data.attributes['fan-speed'] != flair_speed:
+                    fan_attributes = self.set_attributes('fan_mode', flair_speed, False)
+                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=mode_attributes, relationships={})
+                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=fan_attributes, relationships={})
                     self.hvac_data.attributes['fan-speed'] = flair_speed
-                    self.async_write_ha_state()
-                    await self.coordinator.async_request_refresh()
-                    return None
                 else:
-                    await self.async_set_fan_mode(FAN_AUTO)
+                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=mode_attributes, relationships={})
+
+                self.hvac_data.attributes['mode'] = mode
+                self.async_write_ha_state()
+                await self.coordinator.async_request_refresh()
+                return None
+
             if hvac_mode == HVACMode.FAN_ONLY:
-                # If fan speed is Auto before switching to Fan Only mode,
-                # we have to set a valid fan speed since Auto isn't available
-                # in Fan Only mode.
-                # Note: There is currently a bug in the API where it takes multiple
-                # tries until the validation error doesn't get raised.
-                if self.fan_mode == FAN_AUTO:
+                # When switching to Fan Only mode, Auto fan speed is not valid.
+                # We have to set a non-Auto fan speed if current mode is using
+                # Auto fan speed.
+
+                mode_attributes = self.set_attributes('hvac_mode', mode, False)
+                if self.hvac_data.attributes['fan-speed'] == "Auto": 
                     valid_fan_speed = HVAC_AVAILABLE_FAN_SPEEDS[self.fan_only_fan_speeds[0]]
                     flair_speed = HASS_HVAC_FAN_SPEED_TO_FLAIR.get(valid_fan_speed)
-                    attributes = self.set_attributes('hvac_mode-fan_speed', mode, False, flair_speed)
-                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
-                    self.hvac_data.attributes['mode'] = mode
+                    fan_attributes = self.set_attributes('fan_mode', flair_speed, False)
+                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=mode_attributes, relationships={})
+                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=fan_attributes, relationships={})
                     self.hvac_data.attributes['fan-speed'] = flair_speed
-                    self.async_write_ha_state()
-                    await self.coordinator.async_request_refresh()
-                    return None
-            # For all other cases just send the hvac_mode
+                else:
+                    await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=mode_attributes, relationships={})
+                self.hvac_data.attributes['mode'] = mode
+                self.async_write_ha_state()
+                await self.coordinator.async_request_refresh()
+                return None
+
+            # Handle all other HVAC modes
             attributes = self.set_attributes('hvac_mode', mode, False)
             await self.coordinator.client.update('hvac-units', self.hvac_data.id, attributes=attributes, relationships={})
             self.hvac_data.attributes['mode'] = mode
