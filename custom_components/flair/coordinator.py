@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import timedelta
+import json
 
 from flairaio import FlairClient
 from flairaio.exceptions import FlairAuthError, FlairError
@@ -44,7 +45,8 @@ class FlairDataUpdateCoordinator(DataUpdateCoordinator):
 
         try:
             data = await self.client.get_flair_data()
-            LOGGER.debug(f'Found the following Flair devices: {data}')
+            nl = '\n'
+            LOGGER.debug(f'Found the following Flair structures/devices: {nl}{json.dumps(data, default=vars, indent=4)}')
         except FlairAuthError as error:
             raise ConfigEntryAuthFailed(error) from error
         except FlairError as error:
