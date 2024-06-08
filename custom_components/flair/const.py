@@ -145,3 +145,16 @@ TEMPERATURE_SCALES = {
     "C": "Celsius",
     "K": "Kelvin",
 }
+
+TYPE_TO_MODEL = {
+    "users": "User",
+    "structures": "Structure",
+    "rooms": "Room",
+    "pucks": "Puck",
+    "vents": "Vent",
+    "bridges": "Bridge",
+    "thermostats": "Thermostat",
+    "hvac-units": "HVAC Unit",
+    "zones": "Zone",
+    "schedules": "Schedule"
+}
