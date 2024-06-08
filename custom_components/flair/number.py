@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from flairaio.model import Puck, Structure
+from flairaio.model import Bridge, Puck, Structure
 
 from homeassistant.components.number import (
     NumberDeviceClass,
@@ -46,6 +46,11 @@ async def async_setup_entry(
                         PuckUpperLimit(coordinator, structure_id, puck_id),
                         TempCalibration(coordinator, structure_id, puck_id),
                     ))
+
+            # Bridge
+            if structure_data.bridges:
+                for bridge_id, bridge_data in structure_data.bridges.items():
+                    numbers.append(BridgeLED(coordinator, structure_id, bridge_id))
 
     async_add_entities(numbers)
 
@@ -876,5 +881,119 @@ class TempCalibration(CoordinatorEntity, NumberEntity):
 
         attributes = {
             "temperature-offset-override-c": value
+        }
+        return attributes
+
+
+class BridgeLED(CoordinatorEntity, NumberEntity):
+    """Representation of bridge LED brightness."""
+
+    def __init__(self, coordinator, structure_id, bridge_id):
+        super().__init__(coordinator)
+        self.bridge_id = bridge_id
+        self.structure_id = structure_id
+
+    @property
+    def bridge_data(self) -> Bridge:
+        """Handle coordinator bridge data."""
+
+        return self.coordinator.data.structures[self.structure_id].bridges[self.bridge_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device registry information for this entity."""
+
+        return {
+            "identifiers": {(DOMAIN, self.bridge_data.id)},
+            "name": self.bridge_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Bridge",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """Sets unique ID for this entity."""
+
+        return str(self.bridge_data.id) + '_led'
+
+    @property
+    def name(self) -> str:
+        """Return name of the entity."""
+
+        return "LED brightness"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """Indicate that entity has name defined."""
+
+        return True
+
+    @property
+    def entity_category(self) -> EntityCategory:
+        """Set category to config."""
+
+        return EntityCategory.CONFIG
+
+    @property
+    def icon(self) -> str:
+        """Set icon."""
+
+        return 'mdi:led-on'
+
+    @property
+    def native_value(self) -> int:
+        """Returns current LED brightness."""
+
+        return self.bridge_data.attributes['led-brightness']
+
+    @property
+    def mode(self) -> NumberMode:
+        """Return slider mode."""
+
+        return NumberMode.SLIDER
+
+    @property
+    def native_min_value(self) -> int:
+        """Return minimum allowed brightness."""
+
+        return 20
+
+    @property
+    def native_max_value(self) -> int:
+        """Return max allowed brightness."""
+
+        return 100
+
+    @property
+    def native_step(self) -> int:
+        """Return whole number stepping."""
+
+        return 1
+
+    @property
+    def available(self) -> bool:
+        """Return true if device is available."""
+
+        if not self.bridge_data.attributes['inactive']:
+            return True
+        else:
+            return False
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Update the current value."""
+
+        attributes = self.set_attributes(value)
+        await self.coordinator.client.update('bridges', self.bridge_data.id, attributes=attributes, relationships={})
+        self.bridge_data.attributes['led-brightness'] = value
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
+
+    @staticmethod
+    def set_attributes(value: int) -> dict[str, int]:
+        """Creates attributes dictionary."""
+
+        attributes = {
+            "led-brightness": value
         }
         return attributes
