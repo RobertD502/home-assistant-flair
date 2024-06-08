@@ -29,6 +29,7 @@ async def async_setup_entry(
             if structure_data.hvac_units:
                 switches.extend((
                     LockIR(coordinator, structure_id),
+                    NetworkRepair(coordinator, structure_id)
                 ))
             
             # Pucks
@@ -212,5 +213,79 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
         attributes = {"locked": False}
         await self.coordinator.client.update('pucks', self.puck_data.id, attributes=attributes, relationships={})
         self.puck_data.attributes['locked'] = False
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
+
+
+class NetworkRepair(CoordinatorEntity, SwitchEntity):
+    """Representation of network repair switch."""
+
+    def __init__(self, coordinator, structure_id):
+        super().__init__(coordinator)
+        self.structure_id = structure_id
+
+    @property
+    def structure_data(self) -> Structure:
+        """Handle coordinator structure data."""
+
+        return self.coordinator.data.structures[self.structure_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device registry information for this entity."""
+
+        return {
+            "identifiers": {(DOMAIN, self.structure_data.id)},
+            "name": self.structure_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Structure",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """Sets unique ID for this entity."""
+
+        return str(self.structure_data.id) + '_network_repair'
+
+    @property
+    def name(self) -> str:
+        """Return name of the entity."""
+
+        return "Network repair mode"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """Indicate that entity has name defined."""
+
+        return True
+
+    @property
+    def icon(self) -> str:
+        """Set icon."""
+
+        return 'mdi:plus-network'
+
+    @property
+    def is_on(self) -> bool:
+        """Determine if network repair is in progress."""
+
+        return self.structure_data.attributes['setup-mode']
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Enable network repair mode."""
+
+        attributes = {"setup-mode": True}
+        await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
+        self.structure_data.attributes['setup-mode'] = True
+        self.async_write_ha_state()
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Disable network repair mode."""
+
+        attributes = {"setup-mode": False}
+        await self.coordinator.client.update('structures', self.structure_data.id, attributes=attributes, relationships={})
+        self.structure_data.attributes['setup-mode'] = False
         self.async_write_ha_state()
         await self.coordinator.async_request_refresh()

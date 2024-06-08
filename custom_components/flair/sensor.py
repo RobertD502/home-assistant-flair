@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from flairaio.model import Puck, Room, Structure, Vent
+from flairaio.model import Bridge, Puck, Room, Structure, Vent
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -26,7 +26,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, TYPE_TO_MODEL
 from .coordinator import FlairDataUpdateCoordinator
 
 
@@ -54,7 +54,8 @@ async def async_setup_entry(
                         PuckLight(coordinator, structure_id, puck_id),
                         PuckVoltage(coordinator, structure_id, puck_id),
                         PuckRSSI(coordinator, structure_id, puck_id),
-                        PuckPressure(coordinator, structure_id, puck_id)
+                        PuckPressure(coordinator, structure_id, puck_id),
+                        Gateway(coordinator, structure_id, puck_id, 'pucks')
                     ))
             # Vents
             if structure_data.vents:
@@ -64,7 +65,8 @@ async def async_setup_entry(
                         DuctPressure(coordinator, structure_id, vent_id),
                         VentVoltage(coordinator, structure_id, vent_id),
                         VentRSSI(coordinator, structure_id, vent_id),
-                        VentReportedState(coordinator, structure_id, vent_id)
+                        VentReportedState(coordinator, structure_id, vent_id),
+                        Gateway(coordinator, structure_id, vent_id, 'vents')
                     ))
             # Rooms
             if structure_data.rooms:
@@ -79,6 +81,11 @@ async def async_setup_entry(
                     constraints = structure_data.hvac_units[hvac_id].attributes['constraints']
                     if isinstance(constraints, list):
                         sensors.append(LastButtonPressed(coordinator, structure_id, hvac_id))
+
+            # Bridges
+            if structure_data.bridges:
+                for bridge_id, bridge_data in structure_data.bridges.items():
+                    sensors.append(BridgeRSSI(coordinator, structure_id, bridge_id))
 
     async_add_entities(sensors)
 
@@ -492,7 +499,7 @@ class PuckVoltage(CoordinatorEntity, SensorEntity):
 
 
 class PuckRSSI(CoordinatorEntity, SensorEntity):
-    """Representation of Puck Voltage."""
+    """Representation of Puck RSSI."""
 
     def __init__(self, coordinator, structure_id, puck_id):
         super().__init__(coordinator)
@@ -1230,3 +1237,191 @@ class LastButtonPressed(CoordinatorEntity, SensorEntity):
             return True
         else:
             return False
+
+
+class BridgeRSSI(CoordinatorEntity, SensorEntity):
+    """Representation of Bridge RSSI."""
+
+    def __init__(self, coordinator, structure_id, bridge_id):
+        super().__init__(coordinator)
+        self.bridge_id = bridge_id
+        self.structure_id = structure_id
+
+    @property
+    def bridge_data(self) -> Bridge:
+        """Handle coordinator bridge data."""
+
+        return self.coordinator.data.structures[self.structure_id].bridges[self.bridge_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device registry information for this entity."""
+
+        return {
+            "identifiers": {(DOMAIN, self.bridge_data.id)},
+            "name": self.bridge_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": "Bridge",
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """Sets unique ID for this entity."""
+
+        return str(self.bridge_data.id) + '_rssi'
+
+    @property
+    def name(self) -> str:
+        """Return name of the entity."""
+
+        return "RSSI"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """Indicate that entity has name defined."""
+
+        return True
+
+    @property
+    def native_value(self) -> float:
+        """Return RSSI reading."""
+
+        return self.bridge_data.attributes['current-rssi']
+
+    @property
+    def native_unit_of_measurement(self) -> str:
+        """Return dBm as the native unit."""
+
+        return SIGNAL_STRENGTH_DECIBELS_MILLIWATT
+
+    @property
+    def device_class(self) -> SensorDeviceClass:
+        """Return entity device class."""
+
+        return SensorDeviceClass.SIGNAL_STRENGTH
+
+    @property
+    def state_class(self) -> SensorStateClass:
+        """Return the type of state class."""
+
+        return SensorStateClass.MEASUREMENT
+
+    @property
+    def entity_category(self) -> EntityCategory:
+        """Set category to diagnostic."""
+
+        return EntityCategory.DIAGNOSTIC
+
+    @property
+    def available(self) -> bool:
+        """Return true if device is available."""
+
+        if not self.bridge_data.attributes['inactive']:
+            return True
+        else:
+            return False
+
+
+class Gateway(CoordinatorEntity, SensorEntity):
+    """Representation of device's associated gateway."""
+
+    def __init__(self, coordinator, structure_id, device_id, device_type):
+        super().__init__(coordinator)
+        self.device_id = device_id
+        self.device_type = device_type
+        self.structure_id = structure_id
+
+    @property
+    def structure_data(self) -> Structure:
+        """Handle coordinator structure data."""
+
+        return self.coordinator.data.structures[self.structure_id]
+
+    @property
+    def device_data(self) -> Puck | Vent:
+        """Handle coordinator device data."""
+
+        if self.device_type == 'pucks':
+            return self.structure_data.pucks[self.device_id]
+        else:
+            return self.structure_data.vents[self.device_id]
+
+    @property
+    def device_info(self) -> dict[str, Any]:
+        """Return device registry information for this entity."""
+
+        return {
+            "identifiers": {(DOMAIN, self.device_data.id)},
+            "name": self.device_data.attributes['name'],
+            "manufacturer": "Flair",
+            "model": TYPE_TO_MODEL[self.device_type],
+            "configuration_url": "https://my.flair.co/",
+        }
+
+    @property
+    def unique_id(self) -> str:
+        """Sets unique ID for this entity."""
+
+        return str(self.device_data.id) + '_gateway'
+
+    @property
+    def name(self) -> str:
+        """Return name of the entity."""
+
+        return "Associated gateway"
+
+    @property
+    def has_entity_name(self) -> bool:
+        """Indicate that entity has name defined."""
+
+        return True
+
+    @property
+    def native_value(self) -> str | None:
+        """Return name of associated gateway."""
+
+        return self.get_associated_gateway()
+
+    @property
+    def entity_category(self) -> EntityCategory:
+        """Set category to diagnostic."""
+
+        return EntityCategory.DIAGNOSTIC
+
+    @property
+    def available(self) -> bool:
+        """Return true if device is available."""
+
+        if not self.device_data.attributes['inactive']:
+            return True
+        else:
+            return False
+
+    def get_associated_gateway(self) -> str | None:
+        """Determines the gateway device is using."""
+
+        connected_gateway_id = self.device_data.attributes['connected-gateway-id']
+        connected_gateway_type = self.device_data.attributes['connected-gateway-type']
+
+        if connected_gateway_id:
+            if connected_gateway_id == self.device_data.id:
+                return 'Self'
+            else:
+                if connected_gateway_type == 'puck':
+                    if gateway := self.structure_data.pucks.get(connected_gateway_id):
+                        return gateway.attributes['name']
+                    # If the gateway isn't found
+                    else:
+                        return None
+                elif connected_gateway_type == 'bridge':
+                    if gateway := self.structure_data.bridges.get(connected_gateway_id):
+                        return gateway.attributes['name']
+                    # If gateway isn't found
+                    else:
+                        return None
+                else:
+                    return None
+        else:
+            return None
+        

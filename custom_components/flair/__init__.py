@@ -44,8 +44,11 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         # Prior to release 0.1.3, unique_id was not set when a user migrated
         # from OAuth1.0 to 2.0 via reauthentication. In this case, if not present,
         # unique_id needs to be set and entry version set to the latest version.
-        if not entry.unique_id:
-            entry.unique_id = entry.data[CONF_CLIENT_ID]
-        entry.version = 2.1
+
+        hass.config_entries.async_update_entry(
+            entry,
+            unique_id=entry.data[CONF_CLIENT_ID],
+            version=2.1
+        )
 
     return True
