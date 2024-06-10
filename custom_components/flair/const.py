@@ -24,6 +24,7 @@ LOGGER = logging.getLogger(__package__)
 DEFAULT_SCAN_INTERVAL = 30
 DOMAIN = "flair"
 PLATFORMS = [
+    Platform.BINARY_SENSOR,
     Platform.BUTTON,
     Platform.CLIMATE,
     Platform.COVER,
