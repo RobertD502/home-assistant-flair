@@ -85,6 +85,7 @@ Each bridge has the following entities:
 | Entity               | Entity Type | Additional Comments |
 |----------------------|-------------| --- |
 | `LED brightness`          | `Number`    | Brightness between 20-100. |
+| `Connection status`          | `Binary Sensor`    | Used to show if the bridge is reported as being online by Flair. |
 | `RSSI`               | `Sensor`    | If your bridge is connected via ethernet, this sensor will always report 0.0 |
 
 ## Puck
@@ -104,6 +105,7 @@ Each puck has the following entities:
 | `Temperature calibration` | `Number` | |
 | `Temperature scale` | `Select` | |
 | `Associated gateway`            | `Sensor`    | Displays the name of the gateway (as named in the Flair app) the puck is using. If the puck is a gateway itself, this sensor will read "Self". |
+| `Connection status`          | `Binary Sensor`    | Used to show if the puck is reported as being online by Flair. |
 | `RSSI`               | `Sensor`    | |
 | `Voltage`            | `Sensor`    | Displays the current voltage of the puck. If using batteries to power your puck, this can be used to monitor battery health. |
 
@@ -133,6 +135,7 @@ Each Vent has the following entities:
 | `Duct Temperature` | `Sensor` | |
 | `Reported state` | `Sensor` | This entity is disabled by default. Value corresponds to the percent open of the vent as last reported by the sensor on the vent itself. Can be used in automations to determine if puck failed to open/close a vent by comparing if the state of this sensor is equal to the position of the related vent cover entity (for example checking 5 minutes after the current position of the vent cover entity changed). |
 | `Associated gateway`            | `Sensor`    | Displays the name of the bridge or puck (as named in the Flair app) the vent is using as a gateway. |
+| `Connection status`          | `Binary Sensor`    | Used to show if the vent is reported as being online by Flair. |
 | `RSSI` | `Sensor` | |
 | `Voltage` | `Sensor` | Displays the current voltage of the vent. If using batteries to power your vent, this can be used to monitor battery health. |
 
