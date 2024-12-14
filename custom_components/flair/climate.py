@@ -497,7 +497,10 @@ class HVAC(CoordinatorEntity, ClimateEntity):
     def puck_data(self) -> Puck:
         """Handle coordinator puck data."""
 
-        puck_id = self.hvac_data.relationships['puck']['data']['id']
+        puck_data = self.hvac_data.relationships['puck']['data']
+        if puck_data is None:
+            return None
+        puck_id = puck_data['id']
         return self.coordinator.data.structures[self.structure_id].pucks[puck_id]
 
     @property
@@ -801,7 +804,9 @@ class HVAC(CoordinatorEntity, ClimateEntity):
     @property
     def available(self) -> bool:
         """Return true if associated puck is available."""
-
+        
+        if self.puck_data is None:
+            return False
         if not self.puck_data.attributes['inactive']:
             return True
         else:
