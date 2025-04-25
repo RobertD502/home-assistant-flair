@@ -627,10 +627,11 @@ class PuckPressure(CoordinatorEntity, SensorEntity):
         return True
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         """Return pressure reading."""
 
-        return round(self.puck_data.current_reading['room-pressure'], 2)
+        pressure = self.puck_data.current_reading.get('room-pressure')
+        return round(pressure, 2) if pressure else pressure
 
     @property
     def native_unit_of_measurement(self) -> UnitOfPressure:
@@ -783,10 +784,11 @@ class DuctPressure(CoordinatorEntity, SensorEntity):
         return True
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | None:
         """Return current pressure in kPa."""
 
-        return round(self.vent_data.current_reading['duct-pressure'], 2)
+        pressure = self.vent_data.current_reading.get('duct-pressure')
+        return round(pressure, 2) if pressure else pressure
 
     @property
     def native_unit_of_measurement(self) -> UnitOfPressure:
