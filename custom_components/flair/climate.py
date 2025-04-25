@@ -480,6 +480,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         super().__init__(coordinator)
         self.hvac_id = hvac_id
         self.structure_id = structure_id
+        self.missing_puck_warning = False
 
     @property
     def hvac_data(self) -> HVACUnit:
@@ -806,7 +807,18 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         """Return true if associated puck is available."""
         
         if self.puck_data is None:
+            if not self.missing_puck_warning:
+                LOGGER.warning(
+                    f'No puck is associated with Flair HVAC unit {self.hvac_data.attributes["name"]}. '
+                    f'The HVAC climate entity will not be available until a puck has been associated with it.'
+                )
+                # Set to true to prevent logging warning more than once
+                self.missing_puck_warning = True
             return False
+
+        # Reset missing puck warning back to false in case warning has been
+        # sent before and puck has been associated since
+        self.missing_puck_warning = False
         if not self.puck_data.attributes['inactive']:
             return True
         else:
