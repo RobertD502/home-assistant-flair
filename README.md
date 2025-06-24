@@ -14,9 +14,15 @@ Custom Home Assistant component for controlling and monitoring Flair structures,
 
 ## **Prior To Installation**
 
-**Starting with version `0.1.1` and above**: You will need credentials consisting of **OAuth 2.0** `client_id` and `client_secret`.
+**Starting with version `0.1.1` and above**: You will need **OAuth 2.0** `client_id` and `client_secret` credentials.
 
-If you don't already have these, please [contact Flair Support](https://forms.gle/VohiQjWNv9CAP2ASA) with the email address associated with your registered Flair account.
+To retrieve your credentials:
+1. Log in to your Flair account at [my.flair.co](https://my.flair.co/)
+2. Open the menu and choose **Account Settings**
+3. Scroll down to **Developer Settings**
+4. Copy your **Client ID** and **Client Secret**
+
+If you experience any issues, please [contact Flair Support](https://forms.gle/VohiQjWNv9CAP2ASA) with the email address associated with your registered Flair account.
 
 # Installation
 
