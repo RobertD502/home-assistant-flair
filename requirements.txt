@@ -1,0 +1,2 @@
+flairaio==0.2.0
+homeassistant>=2024.2.0b0
