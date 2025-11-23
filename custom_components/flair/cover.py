@@ -28,11 +28,15 @@ async def async_setup_entry(
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     covers = []
+    processed_vents = set()
 
     for structure_id, structure_data in coordinator.data.structures.items():
             # Vents
             if structure_data.vents:
                 for vent_id, vent_data in structure_data.vents.items():
+                    if vent_id in processed_vents:
+                        continue
+                    processed_vents.add(vent_id)
                     covers.extend((
                         FlairVent(coordinator, structure_id, vent_id),
                     ))

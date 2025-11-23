@@ -41,22 +41,30 @@ async def async_setup_entry(
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     selects = []
+    processed_structures = set()
+    processed_rooms = set()
+    processed_pucks = set()
 
     for structure_id, structure_data in coordinator.data.structures.items():
             # Structures
-            selects.extend((
-                SystemMode(coordinator, structure_id),
-                HomeAwayMode(coordinator, structure_id),
-                HomeAwaySetBy(coordinator, structure_id),
-                DefaultHoldDuration(coordinator, structure_id),
-                SetPointController(coordinator, structure_id),
-                Schedule(coordinator, structure_id),
-                AwayMode(coordinator, structure_id),
-            ))
+            if structure_id not in processed_structures:
+                processed_structures.add(structure_id)
+                selects.extend((
+                    SystemMode(coordinator, structure_id),
+                    HomeAwayMode(coordinator, structure_id),
+                    HomeAwaySetBy(coordinator, structure_id),
+                    DefaultHoldDuration(coordinator, structure_id),
+                    SetPointController(coordinator, structure_id),
+                    Schedule(coordinator, structure_id),
+                    AwayMode(coordinator, structure_id),
+                ))
 
             # Rooms
             if structure_data.rooms:
                 for room_id, room_data in structure_data.rooms.items():
+                    if room_id in processed_rooms:
+                        continue
+                    processed_rooms.add(room_id)
                     selects.extend((
                         RoomActivity(coordinator, structure_id, room_id),
                     ))
@@ -64,6 +72,9 @@ async def async_setup_entry(
             # Pucks
             if structure_data.pucks:
                 for puck_id, puck_data in structure_data.pucks.items():
+                    if puck_id in processed_pucks:
+                        continue
+                    processed_pucks.add(puck_id)
                     selects.extend((
                         PuckBackground(coordinator, structure_id, puck_id),
                         PuckTempScale(coordinator, structure_id, puck_id),

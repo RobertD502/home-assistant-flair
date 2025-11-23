@@ -1,0 +1,30 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Flair račun je već konfiguriran",
+            "reauth_successful": "Ponovna provjera autentičnosti je bila uspješna"
+        },
+        "error": {
+            "cannot_connect": "Povezivanje nije uspjelo",
+            "invalid_auth": "Nevažeća provjera autentičnosti. Jesu li vaše vjerodajnice točne?",
+            "no_structures": "Nema pronađenih struktura",
+            "no_user": "Nijedan korisnik nije pronađen na računu"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "client_id": "OAuth 2.0 client_id",
+                    "client_secret": "OAuth 2.0 client_secret"
+                },
+                "title": "Ispunite svoje Flair OAuth 2.0 vjerodajnice"
+            },
+            "reauth_confirm": {
+                "data": {
+                    "client_id": "OAuth 2.0 client_id",
+                    "client_secret": "OAuth 2.0 client_secret"
+                },
+                "title": "Ponovo se autentificirajte sa svojim Flair OAuth 2.0 vjerodajnicama"
+            }
+        }
+    }
+}

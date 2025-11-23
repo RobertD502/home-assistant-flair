@@ -38,16 +38,27 @@ async def async_setup_entry(
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     sensors = []
+    processed_structures = set()
+    processed_pucks = set()
+    processed_vents = set()
+    processed_rooms = set()
+    processed_hvacs = set()
+    processed_bridges = set()
 
     for structure_id, structure_data in coordinator.data.structures.items():
             # Structures
-            sensors.extend((
-                HomeAwayHoldUntil(coordinator, structure_id),
-            ))
+            if structure_id not in processed_structures:
+                processed_structures.add(structure_id)
+                sensors.extend((
+                    HomeAwayHoldUntil(coordinator, structure_id),
+                ))
 
             # Pucks
             if structure_data.pucks:
                 for puck_id, puck_data in structure_data.pucks.items():
+                    if puck_id in processed_pucks:
+                        continue
+                    processed_pucks.add(puck_id)
                     sensors.extend((
                         PuckTemp(coordinator, structure_id, puck_id),
                         PuckHumidity(coordinator, structure_id, puck_id),
@@ -60,6 +71,9 @@ async def async_setup_entry(
             # Vents
             if structure_data.vents:
                 for vent_id, vent_data in structure_data.vents.items():
+                    if vent_id in processed_vents:
+                        continue
+                    processed_vents.add(vent_id)
                     sensors.extend((
                         DuctTemp(coordinator, structure_id, vent_id),
                         DuctPressure(coordinator, structure_id, vent_id),
@@ -71,6 +85,9 @@ async def async_setup_entry(
             # Rooms
             if structure_data.rooms:
                 for room_id, room_data in structure_data.rooms.items():
+                    if room_id in processed_rooms:
+                        continue
+                    processed_rooms.add(room_id)
                     sensors.extend((
                         HoldTempUntil(coordinator, structure_id, room_id),
                     ))
@@ -78,6 +95,9 @@ async def async_setup_entry(
             # HVAC Units with only button controls
             if structure_data.hvac_units:
                 for hvac_id, hvac_data in structure_data.hvac_units.items():
+                    if hvac_id in processed_hvacs:
+                        continue
+                    processed_hvacs.add(hvac_id)
                     constraints = structure_data.hvac_units[hvac_id].attributes['constraints']
                     if isinstance(constraints, list):
                         sensors.append(LastButtonPressed(coordinator, structure_id, hvac_id))
@@ -85,6 +105,9 @@ async def async_setup_entry(
             # Bridges
             if structure_data.bridges:
                 for bridge_id, bridge_data in structure_data.bridges.items():
+                    if bridge_id in processed_bridges:
+                        continue
+                    processed_bridges.add(bridge_id)
                     sensors.append(BridgeRSSI(coordinator, structure_id, bridge_id))
 
     async_add_entities(sensors)
@@ -164,7 +187,7 @@ class HomeAwayHoldUntil(CoordinatorEntity, SensorEntity):
     @property
     def available(self) -> bool:
         """Determine whether entity is available. 
-
+        
         Return true if home/away is set manually and structure
         has a default hold duration other than next event.
         """
@@ -378,7 +401,7 @@ class PuckLight(CoordinatorEntity, SensorEntity):
     @property
     def native_value(self) -> float:
         """Return current lux level. 
-
+        
         Convert value to Volts then multiply by 200
         for 200 lux per Volt.
         """

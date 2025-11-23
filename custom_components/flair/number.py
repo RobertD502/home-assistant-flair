@@ -30,17 +30,25 @@ async def async_setup_entry(
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     numbers = []
+    processed_structures = set()
+    processed_pucks = set()
+    processed_bridges = set()
 
     for structure_id, structure_data in coordinator.data.structures.items():
             # Structures
-            numbers.extend((
-                TempAwayMin(coordinator, structure_id),
-                TempAwayMax(coordinator, structure_id),
-            ))
+            if structure_id not in processed_structures:
+                processed_structures.add(structure_id)
+                numbers.extend((
+                    TempAwayMin(coordinator, structure_id),
+                    TempAwayMax(coordinator, structure_id),
+                ))
 
             # Pucks
             if structure_data.pucks:
                 for puck_id, puck_data in structure_data.pucks.items():
+                    if puck_id in processed_pucks:
+                        continue
+                    processed_pucks.add(puck_id)
                     numbers.extend((
                         PuckLowerLimit(coordinator, structure_id, puck_id),
                         PuckUpperLimit(coordinator, structure_id, puck_id),
@@ -50,6 +58,9 @@ async def async_setup_entry(
             # Bridge
             if structure_data.bridges:
                 for bridge_id, bridge_data in structure_data.bridges.items():
+                    if bridge_id in processed_bridges:
+                        continue
+                    processed_bridges.add(bridge_id)
                     numbers.append(BridgeLED(coordinator, structure_id, bridge_id))
 
     async_add_entities(numbers)
@@ -113,7 +124,7 @@ class TempAwayMin(CoordinatorEntity, NumberEntity):
     @property
     def native_value(self) -> float:
         """Returns current set point. 
-
+        
         Due to how Home Assistant handles rounding,
         we need to carry it out ourselves based on if
         Home Assistant is set to imperial or metric.
@@ -285,7 +296,7 @@ class TempAwayMax(CoordinatorEntity, NumberEntity):
     @property
     def native_value(self) -> float:
         """Returns current set point. 
-
+        
         Due to how Home Assistant handles rounding,
         we need to carry it out ourselves based on if
         Home Assistant is set to imperial or metric.
@@ -457,7 +468,7 @@ class PuckLowerLimit(CoordinatorEntity, NumberEntity):
     @property
     def native_value(self) -> float:
         """Returns current lower limit. 
-
+        
         Due to how Home Assistant handles rounding,
         we need to carry out rounding on our own depending
         on if HA is in metric or imperial.
@@ -615,7 +626,7 @@ class PuckUpperLimit(CoordinatorEntity, NumberEntity):
     @property
     def native_value(self) -> float:
         """Returns current upper limit. 
-
+        
         Due to how Home Assistant handles rounding,
         we need to carry out rounding on our own depending
         on if HA is in metric or imperial.

@@ -60,15 +60,23 @@ async def async_setup_entry(
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     climates = []
+    processed_structures = set()
+    processed_rooms = set()
+    processed_hvacs = set()
 
     for structure_id, structure_data in coordinator.data.structures.items():
             # Structures
-            climates.extend((
-                StructureClimate(coordinator, structure_id),
-            ))
+            if structure_id not in processed_structures:
+                processed_structures.add(structure_id)
+                climates.extend((
+                    StructureClimate(coordinator, structure_id),
+                ))
             # Room
             if structure_data.rooms:
                 for room_id, room_data in structure_data.rooms.items():
+                    if room_id in processed_rooms:
+                        continue
+                    processed_rooms.add(room_id)
                     climates.extend((
                         RoomTemp(coordinator, structure_id, room_id),
                     ))
@@ -76,6 +84,9 @@ async def async_setup_entry(
             # HVAC Units
             if structure_data.hvac_units:
                 for hvac_id, hvac_data in structure_data.hvac_units.items():
+                    if hvac_id in processed_hvacs:
+                        continue
+                    processed_hvacs.add(hvac_id)
                     # Only create climate entity for mini-split units
                     # Units that only use buttons return a list of constraints while more advanced return a dict
                     constraints = structure_data.hvac_units[hvac_id].attributes['constraints']

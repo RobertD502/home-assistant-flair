@@ -23,17 +23,25 @@ async def async_setup_entry(
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     buttons = []
+    processed_structures = set()
+    processed_rooms = set()
+    processed_hvacs = set()
 
     for structure_id, structure_data in coordinator.data.structures.items():
             # Structures
-            buttons.extend((
-                HomeAwayClearHold(coordinator, structure_id),
-                HomeAwayRevert(coordinator, structure_id),
-            ))
+            if structure_id not in processed_structures:
+                processed_structures.add(structure_id)
+                buttons.extend((
+                    HomeAwayClearHold(coordinator, structure_id),
+                    HomeAwayRevert(coordinator, structure_id),
+                ))
 
             # Rooms
             if structure_data.rooms:
                 for room_id, room_data in structure_data.rooms.items():
+                    if room_id in processed_rooms:
+                        continue
+                    processed_rooms.add(room_id)
                     buttons.extend((
                         RoomClearHold(coordinator, structure_id, room_id),
                     ))
@@ -41,6 +49,9 @@ async def async_setup_entry(
             # HVAC Units with only button controls
             if structure_data.hvac_units:
                 for hvac_id, hvac_data in structure_data.hvac_units.items():
+                    if hvac_id in processed_hvacs:
+                        continue
+                    processed_hvacs.add(hvac_id)
                     constraints = structure_data.hvac_units[hvac_id].attributes['constraints']
                     if isinstance(constraints, list):
                         for constraint in constraints:

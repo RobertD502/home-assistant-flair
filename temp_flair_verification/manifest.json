@@ -1,0 +1,20 @@
+{
+  "domain": "flair",
+  "name": "Flair",
+  "codeowners": [
+    "@RobertD502"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/RobertD502/home-assistant-flair/blob/main/README.md",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/RobertD502/home-assistant-flair/issues",
+  "loggers": [
+    "flairaio"
+  ],
+  "requirements": [
+    "flairaio==0.2.0"
+  ],
+  "version": "0.2.4"
+}

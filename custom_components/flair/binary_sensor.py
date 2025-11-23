@@ -28,19 +28,31 @@ async def async_setup_entry(
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     binary_sensors = []
+    processed_pucks = set()
+    processed_vents = set()
+    processed_bridges = set()
 
     for structure_id, structure_data in coordinator.data.structures.items():
             # Pucks
             if structure_data.pucks:
                 for puck_id, puck_data in structure_data.pucks.items():
+                    if puck_id in processed_pucks:
+                        continue
+                    processed_pucks.add(puck_id)
                     binary_sensors.append(Connectivity(coordinator, structure_id, puck_id, 'pucks'))
             # Vents
             if structure_data.vents:
                 for vent_id, vent_data in structure_data.vents.items():
+                    if vent_id in processed_vents:
+                        continue
+                    processed_vents.add(vent_id)
                     binary_sensors.append(Connectivity(coordinator, structure_id, vent_id, 'vents'))
             # Bridges
             if structure_data.bridges:
                 for bridge_id, bridge_data in structure_data.bridges.items():
+                    if bridge_id in processed_bridges:
+                        continue
+                    processed_bridges.add(bridge_id)
                     binary_sensors.append(Connectivity(coordinator, structure_id, bridge_id, 'bridges'))
 
     async_add_entities(binary_sensors)

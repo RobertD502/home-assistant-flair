@@ -23,18 +23,25 @@ async def async_setup_entry(
     coordinator: FlairDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     switches = []
+    processed_structures = set()
+    processed_pucks = set()
 
     for structure_id, structure_data in coordinator.data.structures.items():
             # Structures
-            if structure_data.hvac_units:
-                switches.extend((
-                    LockIR(coordinator, structure_id),
-                    NetworkRepair(coordinator, structure_id)
-                ))
+            if structure_id not in processed_structures:
+                processed_structures.add(structure_id)
+                if structure_data.hvac_units:
+                    switches.extend((
+                        LockIR(coordinator, structure_id),
+                        NetworkRepair(coordinator, structure_id)
+                    ))
             
             # Pucks
             if structure_data.pucks:
                 for puck_id, puck_data in structure_data.pucks.items():
+                    if puck_id in processed_pucks:
+                        continue
+                    processed_pucks.add(puck_id)
                     switches.extend((
                         PuckLock(coordinator, structure_id, puck_id),
                     ))
