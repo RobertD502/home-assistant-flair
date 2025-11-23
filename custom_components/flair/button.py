@@ -348,7 +348,7 @@ class HVACUnitControlButton(CoordinatorEntity, ButtonEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.hvac_data.id) + f'_{self.constraint}'
+        return str(self.hvac_data.id) + f'_{self.constraint}_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
