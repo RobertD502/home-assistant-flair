@@ -124,7 +124,7 @@ class StructureClimate(CoordinatorEntity, ClimateEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_climate'
+        return str(self.structure_data.id) + '_climate_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -328,7 +328,7 @@ class RoomTemp(CoordinatorEntity, ClimateEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.room_data.id) + '_room'
+        return str(self.room_data.id) + '_room_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -527,7 +527,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.hvac_data.id) + '_hvac_unit'
+        return str(self.hvac_data.id) + '_hvac_unit_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:

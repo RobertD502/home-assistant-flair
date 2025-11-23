@@ -39,6 +39,7 @@ class FlairDataUpdateCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
+        self.config_entry = entry
 
     async def _async_update_data(self) -> FlairData:
         """Fetch data from Flair."""

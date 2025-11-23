@@ -93,7 +93,7 @@ class FlairVent(CoordinatorEntity, CoverEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.vent_data.id) + '_vent'
+        return str(self.vent_data.id) + '_vent_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:

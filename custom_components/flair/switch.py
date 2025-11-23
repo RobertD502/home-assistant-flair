@@ -71,7 +71,7 @@ class LockIR(CoordinatorEntity, SwitchEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_IR_lock'
+        return str(self.structure_data.id) + '_IR_lock_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -151,7 +151,7 @@ class PuckLock(CoordinatorEntity, SwitchEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_puck_lock'
+        return str(self.puck_data.id) + '_puck_lock_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -246,7 +246,7 @@ class NetworkRepair(CoordinatorEntity, SwitchEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_network_repair'
+        return str(self.structure_data.id) + '_network_repair_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:

@@ -78,7 +78,7 @@ class HomeAwayClearHold(CoordinatorEntity, ButtonEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_home_away_clear_hold'
+        return str(self.structure_data.id) + '_home_away_clear_hold_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -154,7 +154,7 @@ class HomeAwayRevert(CoordinatorEntity, ButtonEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_home_away_reverse'
+        return str(self.structure_data.id) + '_home_away_reverse_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -255,7 +255,7 @@ class RoomClearHold(CoordinatorEntity, ButtonEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.room_data.id) + '_clear_hold'
+        return str(self.room_data.id) + '_clear_hold_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:

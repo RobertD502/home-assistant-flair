@@ -84,7 +84,7 @@ class TempAwayMin(CoordinatorEntity, NumberEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_temp_away_min'
+        return str(self.structure_data.id) + '_temp_away_min_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -256,7 +256,7 @@ class TempAwayMax(CoordinatorEntity, NumberEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_temp_away_max'
+        return str(self.structure_data.id) + '_temp_away_max_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -428,7 +428,7 @@ class PuckLowerLimit(CoordinatorEntity, NumberEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_lower_limit'
+        return str(self.puck_data.id) + '_lower_limit_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -586,7 +586,7 @@ class PuckUpperLimit(CoordinatorEntity, NumberEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_upper_limit'
+        return str(self.puck_data.id) + '_upper_limit_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -744,7 +744,7 @@ class TempCalibration(CoordinatorEntity, NumberEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_temp_calibration'
+        return str(self.puck_data.id) + '_temp_calibration_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -915,7 +915,7 @@ class BridgeLED(CoordinatorEntity, NumberEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.bridge_data.id) + '_led'
+        return str(self.bridge_data.id) + '_led_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:

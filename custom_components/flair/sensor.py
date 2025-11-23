@@ -119,7 +119,7 @@ class HomeAwayHoldUntil(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_home_away_hold_until'
+        return str(self.structure_data.id) + '_home_away_hold_until_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -205,7 +205,7 @@ class PuckTemp(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_temperature'
+        return str(self.puck_data.id) + '_temperature_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -283,7 +283,7 @@ class PuckHumidity(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_humidity'
+        return str(self.puck_data.id) + '_humidity_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -361,7 +361,7 @@ class PuckLight(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_light'
+        return str(self.puck_data.id) + '_light_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -444,7 +444,7 @@ class PuckVoltage(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_voltage'
+        return str(self.puck_data.id) + '_voltage_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -534,7 +534,7 @@ class PuckRSSI(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_rssi'
+        return str(self.puck_data.id) + '_rssi_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -618,7 +618,7 @@ class PuckPressure(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_pressure'
+        return str(self.puck_data.id) + '_pressure_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -697,7 +697,7 @@ class DuctTemp(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.vent_data.id) + '_duct_temperature'
+        return str(self.vent_data.id) + '_duct_temperature_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -775,7 +775,7 @@ class DuctPressure(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.vent_data.id) + '_duct_pressure'
+        return str(self.vent_data.id) + '_duct_pressure_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -855,7 +855,7 @@ class VentVoltage(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.vent_data.id) + '_voltage'
+        return str(self.vent_data.id) + '_voltage_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -945,7 +945,7 @@ class VentRSSI(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.vent_data.id) + '_rssi'
+        return str(self.vent_data.id) + '_rssi_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -1029,7 +1029,7 @@ class VentReportedState(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.vent_data.id) + '_reported_state'
+        return str(self.vent_data.id) + '_reported_state_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -1114,7 +1114,7 @@ class HoldTempUntil(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.room_data.id) + '_hold_until'
+        return str(self.room_data.id) + '_hold_until_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -1213,7 +1213,7 @@ class LastButtonPressed(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.hvac_data.id) + '_last_button_pressed'
+        return str(self.hvac_data.id) + '_last_button_pressed_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -1283,7 +1283,7 @@ class BridgeRSSI(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.bridge_data.id) + '_rssi'
+        return str(self.bridge_data.id) + '_rssi_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -1377,7 +1377,7 @@ class Gateway(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.device_data.id) + '_gateway'
+        return str(self.device_data.id) + '_gateway_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:

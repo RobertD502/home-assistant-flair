@@ -101,7 +101,7 @@ class SystemMode(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_system_mode'
+        return str(self.structure_data.id) + '_system_mode_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -183,7 +183,7 @@ class HomeAwayMode(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_home_away_mode'
+        return str(self.structure_data.id) + '_home_away_mode_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -298,7 +298,7 @@ class HomeAwaySetBy(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_home_away_set_by'
+        return str(self.structure_data.id) + '_home_away_set_by_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -420,7 +420,7 @@ class DefaultHoldDuration(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_default_hold_duration'
+        return str(self.structure_data.id) + '_default_hold_duration_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -532,7 +532,7 @@ class SetPointController(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_set_point_controller'
+        return str(self.structure_data.id) + '_set_point_controller_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -661,7 +661,7 @@ class Schedule(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_schedule'
+        return str(self.structure_data.id) + '_schedule_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -773,7 +773,7 @@ class AwayMode(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.structure_data.id) + '_away_mode'
+        return str(self.structure_data.id) + '_away_mode_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -886,7 +886,7 @@ class RoomActivity(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.room_data.id) + '_activity_status'
+        return str(self.room_data.id) + '_activity_status_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -1000,7 +1000,7 @@ class PuckBackground(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_background_color'
+        return str(self.puck_data.id) + '_background_color_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
@@ -1103,7 +1103,7 @@ class PuckTempScale(CoordinatorEntity, SelectEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.puck_data.id) + '_temp_scale'
+        return str(self.puck_data.id) + '_temp_scale_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:

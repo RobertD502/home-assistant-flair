@@ -90,7 +90,7 @@ class Connectivity(CoordinatorEntity, BinarySensorEntity):
     def unique_id(self) -> str:
         """Sets unique ID for this entity."""
 
-        return str(self.device_data.id) + '_connectivity'
+        return str(self.device_data.id) + '_connectivity_' + self.coordinator.config_entry.entry_id
 
     @property
     def name(self) -> str:
