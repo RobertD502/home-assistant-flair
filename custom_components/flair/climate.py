@@ -656,7 +656,7 @@ class HVAC(CoordinatorEntity, ClimateEntity):
         else:
             modes = self.available_hvac_modes
             supported_modes = []
-            # Always make Off mode avaiilable for manually controlled units
+            # Always make Off mode available for manually controlled units
             if self.structure_mode == 'manual':
                 supported_modes.append(HVACMode.OFF)
             for mode in modes:
