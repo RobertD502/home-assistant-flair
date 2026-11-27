@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import sys
 
 from homeassistant.config_entries import ConfigEntry
@@ -10,7 +11,7 @@ from homeassistant.core import HomeAssistant, ServiceCall, callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.service import async_register_admin_service
-from homeassistant.loader import async_get_integration
+from homeassistant.loader import BASE_PRELOAD_PLATFORMS
 
 from .const import DOMAIN, LOGGER, PLATFORMS
 from .coordinator import FlairDataUpdateCoordinator
@@ -66,6 +67,20 @@ async def async_remove_config_entry_device(
 ) -> bool:
     """Remove a config entry from a device."""
     return True
+
+
+def _import_code(package: str) -> None:
+    """Import the new code in the import executor, not the event loop.
+
+    After an unload HA still lists "<domain>.<platform>" as loaded, so it
+    would import the new modules in the event loop (and warn about it);
+    once they are in sys.modules its own import is a cache hit.
+    """
+    module = importlib.import_module(package)
+    # The new module's list, plus what HA preloads with a package (diagnostics, ...).
+    for name in (*module.PLATFORMS, *BASE_PRELOAD_PLATFORMS):
+        if importlib.util.find_spec(f"{package}.{name}") is not None:
+            importlib.import_module(f"{package}.{name}")
 
 
 def _forget_code(hass: HomeAssistant, package: str, domain: str) -> None:
