@@ -26,5 +26,11 @@
       "already_configured": "Flair account is already configured",
       "reauth_successful": "Re-authentication was successful"
     }
+  },
+  "services": {
+    "reload_code": {
+      "name": "Reload code",
+      "description": "For development. Unloads Flair, imports its Python files from disk again and sets it up, so a code change takes effect without restarting Home Assistant. Config flow and manifest changes still need a restart."
+    }
   }
 }
